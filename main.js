@@ -6,9 +6,12 @@ var stats,
     projector,
     mouse2D,
     mouse3D,
+    mouseDeltaX            = 0,
+    lastMouseX,
+    dragging               = false,
     ray,
-    rollOveredFace,
-    theta = 45,
+    rolledOverObject,
+    theta                  = 45,
     darkColor              = 0x603311,
     darkSelectedColor      = 0x633614,
     lightColor             = 0xFFF5EE,
@@ -16,21 +19,18 @@ var stats,
     markerColor            = 0x990000,
     darkMaterials          = smoothMaterial(darkColor),
     darkSelectedMaterials  = smoothMaterial(darkSelectedColor),
-    lightMaterials         = smoothMaterial(lightColor);
+    lightMaterials         = smoothMaterial(lightColor),
     lightSelectedMaterials = smoothMaterial(lightSelectedColor),
     markerMaterials        = smoothMaterial(markerColor, 1),
-    markerObject           = null,
-    markedPole             = null,
-    pieceGeometry          = null,
-    poleGeometry           = null,
-    markerGeometry         = null,
+    markerObject,
+    markedPoleId,
+    pieceGeometry,
+    poleGeometry,
+    markerGeometry,
     pieces                 = [],
     piecePoleIds           = {},
     poleIds                = {},
-    c0                     = -300,
-    dx = 0,
-    lastMouseX = null,
-    dragging = false;
+    c0                     = -300;
  
 function smoothMaterial(color, opacity) {
   opacity = opacity || 1;
@@ -126,6 +126,7 @@ function drawGame() {
   drawTable();
   drawCylinders();
   drawPiecesRandomly();
+  // drawPieces([]);
 }
 
 function drawStats() {
@@ -148,7 +149,7 @@ function drawPoleMarker(poleId) {
 
   markerObject = marker;
 
-  markedPole = poleId;
+  markedPoleId = poleId;
 }
 
 function removePoleMarker() {
@@ -157,33 +158,40 @@ function removePoleMarker() {
     markerObject = null;
   }
 
-  markedPole = null;
+  markedPoleId = null;
 }
 
 function markPole(poleId) {
-  removePoleMarker();
-  drawPoleMarker(poleId);
+  if (markedPoleId != poleId) {
+    removePoleMarker();
+    drawPoleMarker(poleId);
+  }
 }
 
 function setLights() {
   var ambientLight = new THREE.AmbientLight(0x606060);
   scene.addLight(ambientLight);
 
-  var directionalLight = new THREE.DirectionalLight(0xffffff);
-  directionalLight.position.x = -0.7471277;
-  directionalLight.position.y =  0.3376005;
-  directionalLight.position.z =  0.5725609;
+  var directionalLight = new THREE.DirectionalLight(0x999999);
+  directionalLight.position.x = -0.74;
+  directionalLight.position.y =  0.33;
+  directionalLight.position.z =  0.57;
   
   directionalLight.position.normalize();
   scene.addLight(directionalLight);
 
   var directionalLight = new THREE.DirectionalLight(0x808080);
-  directionalLight.position.x = -0.1398011;
-  directionalLight.position.y =  0.6594643;
-  directionalLight.position.z = -0.7386219;
+  directionalLight.position.x = -0.13;
+  directionalLight.position.y =  0.65;
+  directionalLight.position.z = -0.73;
   
   directionalLight.position.normalize();
   scene.addLight(directionalLight);
+}
+
+function setCameraPosition() {
+  camera.position.x = 1400 * Math.sin(theta * Math.PI / 360);
+  camera.position.z = 1400 * Math.cos(theta * Math.PI / 360);
 }
 
 function init() {
@@ -205,6 +213,7 @@ function init() {
   calculateGeometries();
   drawGame();
   setLights();
+  setCameraPosition();
 
   // renderer = new THREE.CanvasRenderer();
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -225,16 +234,16 @@ function onDocumentMouseMove(event) {
   mouse2D.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse2D.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
-  if (dragging) {
-    dx = lastMouseX - mouse2D.x;
-    lastMouseX = mouse2D.x;
+  if (lastMouseX) {
+    mouseDeltaX = lastMouseX - mouse2D.x;
   }
+  lastMouseX = mouse2D.x;
 }
 
 function onDocumentMouseDown(event) {
   event.preventDefault();
 
-  if (markedPole) {
+  if (markedPoleId) {
 
   } else {
     dragging = true;
@@ -262,51 +271,37 @@ function getPoleId(object) {
   }
 }
 
+function setPoleMarkerIfMouseOverPole() {
+  var intersects = ray.intersectScene(scene);
+  if (intersects.length > 0) {
+    var object = intersects[0].object,
+    poleId = getPoleId(object);
+
+    if (poleId >= 0) {
+      markPole(poleId);
+    } else {
+      removePoleMarker();
+    }
+  } else if (rolledOverObject) {
+    rolledOverObject.materials = [];
+    rolledOverObject = null;
+    removePoleMarker();
+  }
+}
+
 function render() {
   mouse3D = projector.unprojectVector(mouse2D.clone(), camera);
   ray.direction = mouse3D.subSelf(camera.position).normalize();
 
-  var intersects = ray.intersectScene(scene);
-
-  if (intersects.length > 0) {
-
-    var object = intersects[0].object,
-        poleId = getPoleId(object);
-
-    if (poleId >= 0) {
-      console.log(poleId);
-
-      markPole(poleId);
-
-      // if (object != rollOveredFace) {
-
-        // console.dir(object);
-
-        // if (rollOveredFace) {
-          // rollOveredFace.materials = [];
-        // }
-
-        // rollOveredFace = object;
-        // rollOveredFace.materials = [ new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5 }) ];
-      // }
-    } else {
-      removePoleMarker();
-    }
-  } else if (rollOveredFace) {
-    rollOveredFace.materials = [];
-    rollOveredFace = null;
-    removePoleMarker();
+  if (dragging) {
+    theta += mouseDeltaX * 500;
+    mouseDeltaX = 0;
+    setCameraPosition();
+  } else {
+    setPoleMarkerIfMouseOverPole();
   }
 
-  theta += dx * 500;
-
-  console.log(theta);
-  camera.position.x = 1400 * Math.sin(theta * Math.PI / 360);
-  camera.position.z = 1400 * Math.cos(theta * Math.PI / 360);
-
   renderer.render(scene, camera);
-
-  dx = 0;
 }
 
 init();
