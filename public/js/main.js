@@ -1,7 +1,9 @@
 var requires = [
+  "http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js",
   "Three",
   "RequestAnimationFrame",
   "Stats",
+  "/socket.io/socket.io.js"
 ];
 
 require(requires, function() {
@@ -9,7 +11,6 @@ require(requires, function() {
     game();
   });
 });
-
 
 function game() {
   var stats,
@@ -45,7 +46,53 @@ function game() {
       poleIds                = {},
       polePieceCount         = [],
       c0                     = -300,
-      playerId               = 1;
+      playerId               = 1,
+      socket;
+
+  function isPlaying() {
+    return playerId > 0 && playerId <= 2;
+  }
+
+  function showPlayerLabel() {
+    var ele, label;
+    if (!(ele = $("#player_name")).length) {
+      ele = $('<div id="player_name"></div>');
+      $(document.body).append(ele);
+    }
+
+    if (playerId == 1) {
+      label = "Light";
+    } else if (playerId == 2) {
+      label = "Dark";
+    } else {
+      label = "Observer";
+    }
+    ele.text(label);
+  }
+
+  function connect() {
+    socket = io.connect();
+    
+    socket.on("connect", function() {
+      console.log("connected");
+    });
+
+    socket.on("disconnect", function() {
+      console.log('disconnected');
+    });
+
+    socket.on("game_init", function(data) {
+      console.log("Player ID: " + data.playerId);
+      console.log(data.placements);
+      drawPieces(data.placements);
+      playerId = data.playerId;
+      showPlayerLabel();
+    });
+
+    socket.on("placement", function(data) {
+      addPieceToPole(data[0], data[1]);
+    });
+  }
    
   function smoothMaterial(color, opacity) {
     opacity = opacity || 1;
@@ -91,10 +138,10 @@ function game() {
         polePieceCount[poleId] = 0;
 
         for (var y = 0; y < 4; y++) {
-          var placement = placements[x + 4 * (y + 4 * z)];
+          var playerId = placements[x + 4 * (y + 4 * z)];
 
-          if (placement > 0) {
-            var materials = placement == 1 ? darkMaterials : lightMaterials;
+          if (playerId > 0) {
+            var materials = materialForPlayerId(playerId);
 
             var piece = drawPiece(x, y, z, materials);
             piecePoleIds[piece.id] = poleId;
@@ -141,7 +188,8 @@ function game() {
   }
 
   function drawTable() {
-    var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 0, 0), smoothMaterial(0x335533));
+    var material = new THREE.MeshBasicMaterial({map: THREE.ImageUtils.loadTexture("wood.jpg")});
+    var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 0, 0), material);
     plane.rotation.x = - 90 * Math.PI / 180;
     scene.addObject(plane);
   }
@@ -254,7 +302,7 @@ function game() {
     setLights();
 
     // renderer = new THREE.CanvasRenderer();
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({antialias: true});
     // renderer = new THREE.WebGLRenderer();
     setSize();
 
@@ -266,7 +314,15 @@ function game() {
     document.addEventListener("mousemove", onDocumentMouseMove, false);
     document.addEventListener("mousedown", onDocumentMouseDown, false);
     document.addEventListener("mouseup", onDocumentMouseUp, false);
+    window.addEventListener("keyup", onDocumentKeyPress, false);
     window.addEventListener("resize", onWindowResize, false);
+  }
+
+  function onDocumentKeyPress(event) {
+    if (event.keyCode == 78) {
+      console.log('NEW GAME');
+      socket.emit('new_game');
+    }
   }
 
   function onDocumentMouseMove(event) {
@@ -285,26 +341,21 @@ function game() {
     return playerId == 1 ? lightMaterials : darkSelectedMaterials;
   }
 
-  function addPieceToPole(poleId) {
+  function addPieceToPole(poleId, playerId) {
     var poleCoods = poleCordsFromPoleId(poleId),
         y         = polePieceCount[poleId],
         piece     = drawPiece(poleCoods[0], y, poleCoods[1], materialForPlayerId(playerId));
 
     piecePoleIds[piece.id] = poleId;
     polePieceCount[poleId] = y + 1;
-
-    if (playerId == 1) {
-      playerId = 2;
-    } else if (playerId == 2) {
-      playerId = 1;
-    }
   }
 
   function onDocumentMouseDown(event) {
     event.preventDefault();
 
     if (markedPoleId != null) {
-      addPieceToPole(markedPoleId);
+      // addPieceToPole(markedPoleId);
+      socket.emit('place', markedPoleId);
     } else {
       dragging = true;
     }
@@ -365,15 +416,15 @@ function game() {
       theta += mouseDeltaX * 500;
       mouseDeltaX = 0;
       setCameraPosition();
-    } else {
+    } else if (isPlaying()) {
       setPoleMarkerIfMouseOverPole();
     }
 
     renderer.render(scene, camera);
   }
 
+  connect();
   init();
   animate();
-  console.log(renderer.getContext().getContextAttributes());
 }
 
