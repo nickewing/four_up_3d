@@ -93,12 +93,20 @@ function game() {
     ele.text(label);
   }
 
+  function gameId() {
+    var hash = window.location.hash;
+
+    if (hash) {
+      return hash.slice(1);
+    }
+  }
+
   function connect() {
     socket = io.connect();
     
     socket.on("connect", function() {
       console.log("connected");
-      hideOverlay();
+      socket.emit("setup", {gameId: gameId()});
     });
 
     socket.on("disconnect", function() {
@@ -111,7 +119,8 @@ function game() {
       drawPieces(data.placements);
       playerId = data.playerId;
       showPlayerLabel();
-      // History.pushState({gameId: data.gameId}, "Game " + data.gameId, data.gameId);
+      window.location.hash = data.gameId;
+      hideOverlay();
     });
 
     socket.on("placement", function(data) {

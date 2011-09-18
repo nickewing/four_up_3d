@@ -22,24 +22,29 @@ var io = sio.listen(app);
 io.set('log level', 1);
 
 io.sockets.on('connection', function(socket) {
-  var game = new Game(Game.generateKey());
+  var game;
 
-  socket.on('disconnect', function() {
-    game.leave();
+  socket.on('setup', function(data) {
+    game = new Game(data.gameId || Game.generateKey());
+
+    socket.on('disconnect', function() {
+      game.leave();
+    });
+
+    socket.on('place', function(poleId) {
+      game.placePiece(poleId);
+    });
+
+    socket.on('clear', function() {
+      game.reset();
+    });
+
+    game.onUpdate(function(data) {
+      var type = data.type;
+      delete data.type;
+      socket.emit(type, data);
+    });
   });
 
-  socket.on('place', function(poleId) {
-    game.placePiece(poleId);
-  });
-
-  socket.on('clear', function() {
-    game.reset();
-  });
-
-  game.onUpdate(function(data) {
-    var type = data.type;
-    delete data.type;
-    socket.emit(type, data);
-  });
 });
 

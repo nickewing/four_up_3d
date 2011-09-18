@@ -1,5 +1,6 @@
 var Board = require('./board').Board,
-    redis = require('redis');
+    redis = require('redis'),
+    crypto = require('crypto');
 
 function Game(id) {
   var board,
@@ -138,7 +139,10 @@ Game.PLAYER_TWO = 2;
 Game.OBSERVER = 3;
 
 Game.generateKey = function() {
-  return 'dummy'; // FIXME
+  var hash = crypto.createHash('sha1');
+  hash.update(Date.now().toString());
+  hash.update(Math.random().toString());
+  return hash.digest('hex').slice(0, 12);
 }
 
 exports.Game = Game;
