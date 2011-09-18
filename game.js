@@ -9,7 +9,13 @@ function Game(id) {
       dbClient = redis.createClient()
       dbSubscriber = redis.createClient();
 
-  console.log(board);
+  function debug(message) {
+    var str = "DEBUG [" + dbKey() + "]";
+    if (playerId) {
+      str += "[" + playerId + "]";
+    }
+    console.log(str + ": " + message);
+  }
 
   function dbKey() {
     return '3dc4.game.' + id;
@@ -23,9 +29,10 @@ function Game(id) {
 
     dbClient.set(dbKey(), gameData, function(err) {
       if (err) {
-        console.log(err);
+        debug(err);
       } else {
-        console.log("Saved: " + gameData);
+        // debug("Saved: " + gameData);
+        debug("Saved");
       }
       if (cb) cb();
     });
@@ -35,12 +42,13 @@ function Game(id) {
     dbClient.get(dbKey(), function(err, value) {
       if (value) {
         var gameData = JSON.parse(value);
-        console.log("Found game: " + value);
+        // debug("Found game: " + value);
+        debug("Loaded");
 
         board = new Board(gameData.placements);
         players = gameData.players;
       } else {
-        console.log("New game with key " + dbKey());
+        debug("New game " + dbKey());
         board = new Board();
         board.clear();
       }
@@ -57,8 +65,9 @@ function Game(id) {
   }
 
   function onDbMessage(channel, data) {
-    load();
-    updateSubscribers(JSON.parse(data));
+    load(function() {
+      updateSubscribers(JSON.parse(data));
+    });
   }
 
   function publishDbUpdate(data) {
@@ -102,7 +111,7 @@ function Game(id) {
   }
 
   this.leave = function() {
-    console.log('player left: ' + playerId);
+    debug('Player left: ' + playerId);
     if (playerId <= 2)
       players[playerId - 1] = false;
     save();
@@ -113,6 +122,7 @@ function Game(id) {
     join(function() {
       updateSubscribers({
         type: "setup",
+        gameId: id,
         placements: board.placementsToString(),
         playerId: playerId
       });

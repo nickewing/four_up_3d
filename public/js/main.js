@@ -1,14 +1,28 @@
 var requires = [
-  "http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js",
+  "http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js",
   "Three",
   "RequestAnimationFrame",
   // "Stats",
   "/socket.io/socket.io.js"
 ];
 
-require(requires, function() {
-  require.ready(function(three, requestAnimationFrame, stats) {
-    game();
+require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], function() {
+  require(requires, function() {
+    require.ready(function(jquery, history) {
+      game();
+
+      $('html').disableSelection();
+      $('#about_button').
+        button({icons: {primary: "ui-icon-info"}}).
+        click(function() { $('#about_dialog').dialog('open'); });
+      $('#new_game_button').
+        button().
+        click(function() { });
+      $('#about_dialog').dialog({
+        autoOpen: false,
+        resizable: false
+      });
+    });
   });
 });
 
@@ -45,9 +59,18 @@ function game() {
       piecePoleIds           = {},
       poleIds                = {},
       polePieceCount         = [],
-      c0                     = -300,
+      poleZeroCoord          = -300,
       playerId               = 1,
       socket;
+
+  function showOverlayText(text) {
+    $('#overlay_message span').text(text);
+    $('#overlay_message').show();
+  }
+
+  function hideOverlay() {
+    $('#overlay_message').hide();
+  }
 
   function isPlaying() {
     return playerId > 0 && playerId <= 2;
@@ -75,10 +98,12 @@ function game() {
     
     socket.on("connect", function() {
       console.log("connected");
+      hideOverlay();
     });
 
     socket.on("disconnect", function() {
       console.log('disconnected');
+      showOverlayText('Disconnected!  Retrying connection...');
     });
 
     socket.on("setup", function(data) {
@@ -86,6 +111,7 @@ function game() {
       drawPieces(data.placements);
       playerId = data.playerId;
       showPlayerLabel();
+      // History.pushState({gameId: data.gameId}, "Game " + data.gameId, data.gameId);
     });
 
     socket.on("placement", function(data) {
@@ -120,9 +146,9 @@ function game() {
 
   function drawPiece(x, y, z, materials) {
     var piece = new THREE.Mesh(pieceGeometry, materials);
-    piece.position.x = c0 + x * 200;
+    piece.position.x = poleZeroCoord + x * 200;
     piece.position.y = 50 + y * 100;
-    piece.position.z = c0 + z * 200;
+    piece.position.z = poleZeroCoord + z * 200;
     piece.rotation.x = 90 * Math.PI / 180;
     scene.addObject(piece);
     pieces.push(piece);
@@ -158,31 +184,13 @@ function game() {
     }
   }
 
-  function drawPiecesRandomly() {
-    var placements = [];
-
-    for (var i = 0; i < 4*4*4; i++) {
-      placements[i] = 0;
-    }
-
-    for (var x = 0; x < 4; x++) {
-      for (var z = 0; z < 4; z++) {
-        var numPieces = Math.random() * 4;
-        for (var y = 0; y < numPieces; y++) {
-          placements[x + 4 * (y + 4 * z)] = Math.random() > 0.5 ? 1 : 2;
-        }
-      }
-    }
-    drawPieces(placements);
-  }
-
   function drawCylinders() {
     for (var x = 0; x < 4; x++) {
       for (var z = 0; z < 4; z++) {
         var pole = new THREE.Mesh(poleGeometry, smoothMaterial(0x999999));
-        pole.position.x = c0 + x * 200;
+        pole.position.x = poleZeroCoord + x * 200;
         pole.position.y = 200;
-        pole.position.z = c0 + z * 200;
+        pole.position.z = poleZeroCoord + z * 200;
         pole.rotation.x = 90 * Math.PI / 180;
         scene.addObject(pole);
 
@@ -192,8 +200,13 @@ function game() {
   }
 
   function drawTable() {
-    var material = new THREE.MeshBasicMaterial({map: THREE.ImageUtils.loadTexture("wood.jpg")});
-    var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 0, 0), material);
+    var materials = [
+      new THREE.MeshLambertMaterial({color: 0x888888, shading: THREE.FlatShading}),
+      new THREE.MeshFaceMaterial()
+    ];
+
+    var plane = new THREE.Mesh(new THREE.CubeGeometry(1000, 1000, 50), materials);
+    plane.position.y -= 25;
     plane.rotation.x = - 90 * Math.PI / 180;
     scene.addObject(plane);
   }
@@ -201,7 +214,6 @@ function game() {
   function drawGame() {
     drawTable();
     drawCylinders();
-    // drawPiecesRandomly();
     drawPieces([]);
   }
 
@@ -218,9 +230,9 @@ function game() {
     var poleCoods = poleCordsFromPoleId(poleId);
 
     var marker = new THREE.Mesh(markerGeometry, markerMaterials);
-    marker.position.x = c0 + poleCoods[0] * 200;
+    marker.position.x = poleZeroCoord + poleCoods[0] * 200;
     marker.position.y = 450;
-    marker.position.z = c0 + poleCoods[1] * 200;
+    marker.position.z = poleZeroCoord + poleCoods[1] * 200;
     marker.rotation.x = -90 * Math.PI / 180;
     scene.addObject(marker);
 
@@ -257,7 +269,7 @@ function game() {
 
     var directionalLight = new THREE.DirectionalLight(0x999999);
     directionalLight.position.x = -0.74;
-    directionalLight.position.y =  0.33;
+    directionalLight.position.y =  0.93;
     directionalLight.position.z =  0.57;
     
     directionalLight.position.normalize();
@@ -290,8 +302,8 @@ function game() {
   }
 
   function init() {
-    container = document.createElement('div');
-    document.body.appendChild(container);
+    container = $('<div></div>');
+    $('#render_area').append(container);
 
     scene = new THREE.Scene();
 
@@ -308,8 +320,7 @@ function game() {
     renderer = new THREE.WebGLRenderer({antialias: true});
     setSize();
 
-    container.appendChild(renderer.domElement);
-
+    container.append(renderer.domElement);
 
     drawStats();
 
@@ -318,6 +329,8 @@ function game() {
     document.addEventListener("mouseup", onDocumentMouseUp, false);
     window.addEventListener("keyup", onDocumentKeyPress, false);
     window.addEventListener("resize", onWindowResize, false);
+
+    $('#game_ui').show();
   }
 
   function onDocumentKeyPress(event) {
@@ -327,6 +340,10 @@ function game() {
   }
 
   function onDocumentMouseMove(event) {
+    if (event.target != renderer.domElement) {
+      return;
+    }
+
     event.preventDefault();
 
     mouse2D.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -352,6 +369,10 @@ function game() {
   }
 
   function onDocumentMouseDown(event) {
+    if (event.target != renderer.domElement) {
+      return;
+    }
+
     event.preventDefault();
 
     if (markedPoleId != null) {
@@ -428,4 +449,3 @@ function game() {
   init();
   animate();
 }
-

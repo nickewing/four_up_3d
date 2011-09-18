@@ -9,8 +9,8 @@ app.configure(function () {
   app.use(express.static(__dirname + '/public'));
 });
 
-app.get('/', function (req, res) {
-  res.render('index', { layout: false });
+app.get('/:game_id', function (req, res) {
+  res.redirect('/');
 });
 
 app.listen(3000, function () {
@@ -19,6 +19,7 @@ app.listen(3000, function () {
 });
 
 var io = sio.listen(app);
+io.set('log level', 1);
 
 io.sockets.on('connection', function(socket) {
   var game = new Game(Game.generateKey());
