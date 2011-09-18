@@ -2,7 +2,7 @@ var requires = [
   "http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js",
   "Three",
   "RequestAnimationFrame",
-  "Stats",
+  // "Stats",
   "/socket.io/socket.io.js"
 ];
 
@@ -81,16 +81,21 @@ function game() {
       console.log('disconnected');
     });
 
-    socket.on("game_init", function(data) {
-      console.log("Player ID: " + data.playerId);
-      console.log(data.placements);
+    socket.on("setup", function(data) {
+      console.log(data);
       drawPieces(data.placements);
       playerId = data.playerId;
       showPlayerLabel();
     });
 
     socket.on("placement", function(data) {
-      addPieceToPole(data[0], data[1]);
+      console.log(data);
+      addPieceToPole(data.poleId, data.playerId);
+    });
+
+    socket.on("clear_board", function(data) {
+      console.log(data);
+      drawPieces([]);
     });
   }
    
@@ -120,6 +125,7 @@ function game() {
     piece.position.z = c0 + z * 200;
     piece.rotation.x = 90 * Math.PI / 180;
     scene.addObject(piece);
+    pieces.push(piece);
 
     return piece;
   }
@@ -146,8 +152,6 @@ function game() {
             var piece = drawPiece(x, y, z, materials);
             piecePoleIds[piece.id] = poleId;
             polePieceCount[poleId]++;
-
-            pieces.push(piece);
           }
         }
       }
@@ -301,9 +305,7 @@ function game() {
     drawGame();
     setLights();
 
-    // renderer = new THREE.CanvasRenderer();
     renderer = new THREE.WebGLRenderer({antialias: true});
-    // renderer = new THREE.WebGLRenderer();
     setSize();
 
     container.appendChild(renderer.domElement);
@@ -320,8 +322,7 @@ function game() {
 
   function onDocumentKeyPress(event) {
     if (event.keyCode == 78) {
-      console.log('NEW GAME');
-      socket.emit('new_game');
+      socket.emit('clear');
     }
   }
 
