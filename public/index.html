@@ -5,77 +5,7 @@
     <meta charset="utf-8">
     <title>3dc4</title>
     <link rel="stylesheet" type="text/css" href="css/jqueryui/jquery-ui-1.8.16.custom.css" />
-    <style type="text/css">
-      body {
-        background-color: #292929;
-        margin: 0;
-        overflow: hidden;
-        font-size: 14px;
-        cursor:default;
-
-        background-image: linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-        background-image: -o-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-        background-image: -moz-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-        background-image: -webkit-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-        background-image: -ms-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-
-        background-image: -webkit-gradient(
-          linear,
-          left bottom,
-          left top,
-          color-stop(0.2, rgb(31,33,31)),
-          color-stop(0.77, rgb(102,110,110))
-        );
-        
-      }
-
-      .ui-button {
-        font-size: 1em;
-      }
-
-      #player_name {
-        position: absolute;
-        right: 10px;
-        top: 10px;
-        background: #222;
-        color: #900;
-        padding: 4px;
-        font-family: Arial;
-      }
-
-      #bottom_left_buttons {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-      }
-
-      #bottom_right_buttons {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-      }
-
-      #game_ui, #about_dialog {
-        display: none;
-      }
-
-      #overlay_message div {
-        position: absolute;
-        left: 50px;
-        top: 30px;
-        padding: 10px 20px;
-      }
-
-      #overlay_message img {
-        padding: 5px 30px 5px 5px;
-        float: left;
-      }
-
-      textarea, input, a {
-        outline:none;
-      }
-
-    </style>
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
   </head>
   <body>
     <div id="overlay_message" class="ui-widget-overlay">
@@ -83,6 +13,11 @@
         <img src="busy.gif" width="43" height="11" />
         <span>Loading...</span>
       </div>
+    </div>
+
+    <div id="requirements_message" class="ui-widget-content ui-corner-all">
+      <p>This game requires WebGL to function properly.</p>
+      <p>Find out how to get it <a href="http://get.webgl.org/">here</a>.</p>
     </div>
 
     <div id="game_ui">
@@ -96,12 +31,8 @@
     </div>
 
     <div id="about_dialog">
-      <p>
-        Created by <a href="http://nickewing.net">Nick Ewing</a>.
-      </p>
-      <p>
-        Source available on <a href="">GitHub</a>.
-      </p>
+      <p>Created by <a href="http://nickewing.net">Nick Ewing</a>.</p>
+      <p>Source available on <a href="https://github.com/nickewing/">GitHub</a>.</p>
     </div>
 
     <script data-main="js/main" src="js/require.js"></script>

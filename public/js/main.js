@@ -9,22 +9,45 @@ var requires = [
 require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], function() {
   require(requires, function() {
     require.ready(function(jquery, history) {
-      game();
+      if (hasWebGl()) {
+        game();
 
-      $('html').disableSelection();
-      $('#about_button').
-        button({icons: {primary: "ui-icon-info"}}).
-        click(function() { $('#about_dialog').dialog('open'); });
-      $('#new_game_button').
-        button().
-        click(function() { });
-      $('#about_dialog').dialog({
-        autoOpen: false,
-        resizable: false
-      });
+        $('html').disableSelection();
+        $('#about_button').
+          button({icons: {primary: "ui-icon-info"}}).
+          click(function() { $('#about_dialog').dialog('open'); });
+        $('#new_game_button').
+          button().
+          click(function() { });
+        $('#about_dialog').dialog({
+          autoOpen: false,
+          resizable: false
+        });
+      } else {
+        hideOverlay();
+        $('#requirements_message').show();
+      }
     });
   });
 });
+
+function showOverlayText(text) {
+  $('#overlay_message span').text(text);
+  $('#overlay_message').show();
+}
+
+function hideOverlay() {
+  $('#overlay_message').hide();
+}
+
+function hasWebGl() {
+  try {
+    return !!window.WebGLRenderingContext &&
+      !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
+  } catch(e) {
+    return false;
+  }
+}
 
 function game() {
   var stats,
@@ -62,15 +85,6 @@ function game() {
       poleZeroCoord          = -300,
       playerId               = 1,
       socket;
-
-  function showOverlayText(text) {
-    $('#overlay_message span').text(text);
-    $('#overlay_message').show();
-  }
-
-  function hideOverlay() {
-    $('#overlay_message').hide();
-  }
 
   function isPlaying() {
     return playerId > 0 && playerId <= 2;
