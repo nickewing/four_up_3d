@@ -63,12 +63,12 @@ function game() {
       ray,
       rolledOverObject,
       theta                  = 45,
-      darkColor              = 0x603311,
+      darkColor              = 0x4B3621,
       darkSelectedColor      = 0x633614,
       lightColor             = 0xFFF5EE,
       lightSelectedColor     = 0xFFF5FF,
       markerColor            = 0x990000,
-      darkMaterials          = smoothMaterial(darkColor),
+      darkMaterials          = smoothMaterial(darkColor, 0.5),
       darkSelectedMaterials  = smoothMaterial(darkSelectedColor),
       lightMaterials         = smoothMaterial(lightColor),
       lightSelectedMaterials = smoothMaterial(lightSelectedColor),
@@ -148,10 +148,9 @@ function game() {
     });
   }
    
-  function smoothMaterial(color, opacity) {
-    opacity = opacity || 1;
+  function smoothMaterial(color) {
     return [
-      new THREE.MeshLambertMaterial({color: color, opacity: opacity, shading: THREE.SmoothShading}),
+      new THREE.MeshLambertMaterial({color: color, shading: THREE.SmoothShading}),
       new THREE.MeshFaceMaterial()
     ];
   }
@@ -379,7 +378,7 @@ function game() {
   }
 
   function materialForPlayerId(playerId) {
-    return playerId == 1 ? lightMaterials : darkSelectedMaterials;
+    return playerId == 1 ? lightMaterials : darkMaterials;
   }
 
   function addPieceToPole(poleId, playerId) {
