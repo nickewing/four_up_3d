@@ -2,7 +2,7 @@ var Board = require('./board').Board,
     redis = require('redis'),
     crypto = require('crypto');
 
-function Game(id) {
+function Game(sessionId) {
   var board,
       players = [false, false],
       playerId,
@@ -19,7 +19,7 @@ function Game(id) {
   }
 
   function dbKey() {
-    return '3dc4.game.' + id;
+    return '3dc4.sessions.' + sessionId;
   }
 
   function save(cb) {
@@ -123,8 +123,8 @@ function Game(id) {
     join(function() {
       updateSubscribers({
         type: "setup",
-        gameId: id,
-        placements: board.placementsToString(),
+        sessionId: sessionId,
+        placements: board.placements,
         playerId: playerId
       });
     });
@@ -138,7 +138,7 @@ Game.PLAYER_ONE = 1;
 Game.PLAYER_TWO = 2;
 Game.OBSERVER = 3;
 
-Game.generateKey = function() {
+Game.generateNewSessionId = function() {
   var hash = crypto.createHash('sha1');
   hash.update(Date.now().toString());
   hash.update(Math.random().toString());

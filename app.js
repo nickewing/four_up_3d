@@ -21,7 +21,8 @@ io.sockets.on('connection', function(socket) {
   var game;
 
   socket.on('setup', function(data) {
-    game = new Game(data.gameId || Game.generateKey());
+    console.log(data);
+    game = new Game(data.sessionId || Game.generateNewSessionId());
 
     socket.on('disconnect', function() {
       game.leave();

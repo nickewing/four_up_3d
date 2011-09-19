@@ -109,7 +109,7 @@ function game() {
     ele.text(label);
   }
 
-  function gameId() {
+  function sessionId() {
     var hash = window.location.hash;
 
     if (hash) {
@@ -122,7 +122,7 @@ function game() {
     
     socket.on("connect", function() {
       // console.log("connected");
-      socket.emit("setup", {gameId: gameId()});
+      socket.emit("setup", {sessionId: sessionId()});
     });
 
     socket.on("disconnect", function() {
@@ -135,7 +135,7 @@ function game() {
       drawPieces(data.placements);
       playerId = data.playerId;
       showPlayerLabel();
-      window.location.hash = data.gameId;
+      window.location.hash = data.sessionId;
       hideOverlay();
     });
 
