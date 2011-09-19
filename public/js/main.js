@@ -70,9 +70,7 @@ function game() {
       lightSelectedColor     = 0xFFF5FF,
       markerColor            = 0x990000,
       darkMaterials          = smoothMaterial(darkColor, 0.5),
-      darkSelectedMaterials  = smoothMaterial(darkSelectedColor),
       lightMaterials         = smoothMaterial(lightColor),
-      lightSelectedMaterials = smoothMaterial(lightSelectedColor),
       markerMaterials        = flatMaterial(markerColor),
       markerObject,
       markedPoleId,
@@ -170,7 +168,7 @@ function game() {
     poleGeometry = new THREE.CylinderGeometry(15, 10, 10, 410, 0, 0);
     poleGeometry.computeVertexNormals();
 
-    poleHitAreaGeometry = new THREE.CylinderGeometry(15, 30, 30, 410, 0, 0);
+    poleHitAreaGeometry = new THREE.CylinderGeometry(15, 30, 30, 440, 0, 0);
 
     pieceGeometry = new THREE.SphereGeometry(50, 50, 50);
     pieceGeometry.computeVertexNormals();
