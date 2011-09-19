@@ -10,7 +10,7 @@ require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], fun
   require(requires, function() {
     require.ready(function(jquery, history) {
       if (hasWebGl()) {
-        game();
+        var game = new Game();
 
         $('html').disableSelection();
         $('#about_button').
@@ -18,7 +18,7 @@ require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], fun
           click(function() { $('#about_dialog').dialog('open'); });
         $('#new_game_button').
           button().
-          click(function() { });
+          click(function() { game.clear(); });
         $('#about_dialog').dialog({
           autoOpen: false,
           resizable: false
@@ -49,7 +49,7 @@ function hasWebGl() {
   }
 }
 
-function game() {
+function Game() {
   var stats,
       container,
       camera,
@@ -531,4 +531,8 @@ function game() {
   connect();
   init();
   animate();
+
+  this.clear = function() {
+    socket.emit('clear');
+  }
 }
