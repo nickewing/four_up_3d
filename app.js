@@ -9,10 +9,6 @@ app.configure(function () {
   app.use(express.static(__dirname + '/public'));
 });
 
-app.get('/:game_id', function (req, res) {
-  res.redirect('/');
-});
-
 app.listen(3000, function () {
   var addr = app.address();
   console.log('   app listening on http://' + addr.address + ':' + addr.port);

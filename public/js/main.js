@@ -72,7 +72,7 @@ function game() {
       darkSelectedMaterials  = smoothMaterial(darkSelectedColor),
       lightMaterials         = smoothMaterial(lightColor),
       lightSelectedMaterials = smoothMaterial(lightSelectedColor),
-      markerMaterials        = smoothMaterial(markerColor, 1),
+      markerMaterials        = flatMaterial(markerColor),
       markerObject,
       markedPoleId,
       pieceGeometry,
@@ -84,7 +84,8 @@ function game() {
       polePieceCount         = [],
       poleZeroCoord          = -300,
       playerId               = 1,
-      socket;
+      socket,
+      dropSound;
 
   function isPlaying() {
     return playerId > 0 && playerId <= 2;
@@ -119,17 +120,17 @@ function game() {
     socket = io.connect();
     
     socket.on("connect", function() {
-      console.log("connected");
+      // console.log("connected");
       socket.emit("setup", {gameId: gameId()});
     });
 
     socket.on("disconnect", function() {
-      console.log('disconnected');
+      // console.log('disconnected');
       showOverlayText('Disconnected!  Retrying connection...');
     });
 
     socket.on("setup", function(data) {
-      console.log(data);
+      // console.log(data);
       drawPieces(data.placements);
       playerId = data.playerId;
       showPlayerLabel();
@@ -138,12 +139,12 @@ function game() {
     });
 
     socket.on("placement", function(data) {
-      console.log(data);
+      // console.log(data);
       addPieceToPole(data.poleId, data.playerId);
     });
 
     socket.on("clear_board", function(data) {
-      console.log(data);
+      // console.log(data);
       drawPieces([]);
     });
   }
@@ -155,15 +156,21 @@ function game() {
     ];
   }
 
+  function flatMaterial(color) {
+    return [
+      new THREE.MeshLambertMaterial({color: color, shading: THREE.flatShading}),
+      new THREE.MeshFaceMaterial()
+    ];
+  }
+
   function calculateGeometries() {
-    poleGeometry = new THREE.CylinderGeometry(10, 10, 10, 410, 0, 0);
+    poleGeometry = new THREE.CylinderGeometry(15, 10, 10, 410, 0, 0);
     poleGeometry.computeVertexNormals();
 
     pieceGeometry = new THREE.SphereGeometry(50, 50, 50);
     pieceGeometry.computeVertexNormals();
 
-    markerGeometry = new THREE.CylinderGeometry(10, 1, 30, 60, 0, 0);
-    markerGeometry.computeVertexNormals();
+    markerGeometry = new THREE.CylinderGeometry(6, 1, 30, 60, 10, 0);
   }
 
   function drawPiece(x, y, z, materials) {
@@ -222,12 +229,7 @@ function game() {
   }
 
   function drawTable() {
-    var materials = [
-      new THREE.MeshLambertMaterial({color: 0x888888, shading: THREE.FlatShading}),
-      new THREE.MeshFaceMaterial()
-    ];
-
-    var plane = new THREE.Mesh(new THREE.CubeGeometry(1000, 1000, 50), materials);
+    var plane = new THREE.Mesh(new THREE.CubeGeometry(1000, 1000, 50), flatMaterial(0x888888));
     plane.position.y -= 25;
     plane.rotation.x = - 90 * Math.PI / 180;
     scene.addObject(plane);
@@ -251,7 +253,13 @@ function game() {
   function drawPoleMarker(poleId) {
     var poleCoods = poleCordsFromPoleId(poleId);
 
-    var marker = new THREE.Mesh(markerGeometry, markerMaterials);
+    var material =
+      new THREE.MeshLambertMaterial({color: 0x990000,
+                                     opacity: 0.6,
+                                     shading: THREE.flatShading});
+    material.transparent = true;
+
+    var marker = new THREE.Mesh(markerGeometry, material);
     marker.position.x = poleZeroCoord + poleCoods[0] * 200;
     marker.position.y = 450;
     marker.position.z = poleZeroCoord + poleCoods[1] * 200;
@@ -344,6 +352,7 @@ function game() {
 
     container.append(renderer.domElement);
 
+
     drawStats();
 
     document.addEventListener("mousemove", onDocumentMouseMove, false);
@@ -351,8 +360,22 @@ function game() {
     document.addEventListener("mouseup", onDocumentMouseUp, false);
     window.addEventListener("keyup", onDocumentKeyPress, false);
     window.addEventListener("resize", onWindowResize, false);
+    window.addEventListener("contextmenu", onWindowContextMenu, false);
 
     $('#game_ui').show();
+
+    loadSound();
+  }
+
+  function loadSound() {
+    if (window.Audio) {
+      dropSound = new Audio('/sounds/drop.wav');
+    }
+  }
+
+  function onWindowContextMenu(event) {
+    event.preventDefault();
+    return false;
   }
 
   function onDocumentKeyPress(event) {
@@ -388,6 +411,10 @@ function game() {
 
     piecePoleIds[piece.id] = poleId;
     polePieceCount[poleId] = y + 1;
+
+    if (dropSound) {
+      dropSound.play();
+    }
   }
 
   function onDocumentMouseDown(event) {
@@ -397,9 +424,10 @@ function game() {
 
     event.preventDefault();
 
-    if (markedPoleId != null) {
-      // addPieceToPole(markedPoleId);
-      socket.emit('place', markedPoleId);
+    if (event.button == 0) {
+      if (markedPoleId != null) {
+        socket.emit('place', markedPoleId);
+      }
     } else {
       dragging = true;
     }
@@ -453,6 +481,8 @@ function game() {
   }
 
   function render() {
+
+
     var mouse3D = projector.unprojectVector(mouse2D.clone(), camera);
     ray.direction = mouse3D.subSelf(camera.position).normalize();
 
@@ -460,8 +490,12 @@ function game() {
       theta += mouseDeltaX * 500;
       mouseDeltaX = 0;
       setCameraPosition();
+      removePoleMarker();
     } else if (isPlaying()) {
       setPoleMarkerIfMouseOverPole();
+      if (markerObject) {
+        markerObject.rotation.z += 0.01;
+      }
     }
 
     renderer.render(scene, camera);
