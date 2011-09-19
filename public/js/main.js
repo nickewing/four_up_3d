@@ -78,6 +78,7 @@ function game() {
       markedPoleId,
       pieceGeometry,
       poleGeometry,
+      poleHitAreaGeometry,
       markerGeometry,
       pieces                 = [],
       piecePoleIds           = {},
@@ -86,7 +87,8 @@ function game() {
       poleZeroCoord          = -300,
       playerId               = 1,
       socket,
-      dropSound;
+      dropSound,
+      debug                  = false;
 
   function isPlaying() {
     return playerId > 0 && playerId <= 2;
@@ -168,6 +170,8 @@ function game() {
     poleGeometry = new THREE.CylinderGeometry(15, 10, 10, 410, 0, 0);
     poleGeometry.computeVertexNormals();
 
+    poleHitAreaGeometry = new THREE.CylinderGeometry(15, 30, 30, 410, 0, 0);
+
     pieceGeometry = new THREE.SphereGeometry(50, 50, 50);
     pieceGeometry.computeVertexNormals();
 
@@ -214,7 +218,7 @@ function game() {
     }
   }
 
-  function drawCylinders() {
+  function drawPoles() {
     for (var x = 0; x < 4; x++) {
       for (var z = 0; z < 4; z++) {
         var pole = new THREE.Mesh(poleGeometry, smoothMaterial(0x999999));
@@ -224,7 +228,24 @@ function game() {
         pole.rotation.x = 90 * Math.PI / 180;
         scene.addObject(pole);
 
-        poleIds[pole.id] = x * 4 + z;
+        var hitAreaMaterial;
+        if (debug) {
+          hitAreaMaterial =
+            new THREE.MeshLambertMaterial({color: 0x000000,
+                                           opacity: 0.1,
+                                           shading: THREE.flatShading});
+          hitAreaMaterial.transparent = true;
+        }
+
+        var poleHitArea = new THREE.Mesh(poleHitAreaGeometry, hitAreaMaterial);
+        poleHitArea.position.x = poleZeroCoord + x * 200;
+        poleHitArea.position.y = 200;
+        poleHitArea.position.z = poleZeroCoord + z * 200;
+        poleHitArea.rotation.x = 90 * Math.PI / 180;
+        scene.addObject(poleHitArea);
+
+        var poleCoord = x * 4 + z;
+        poleIds[poleHitArea.id] = poleCoord;
       }
     }
   }
@@ -238,7 +259,7 @@ function game() {
 
   function drawGame() {
     drawTable();
-    drawCylinders();
+    drawPoles();
     drawPieces([]);
   }
 
@@ -467,7 +488,7 @@ function game() {
   function getPoleId(object) {
     if (object.geometry == pieceGeometry) {
       return piecePoleIds[object.id];
-    } else if (object.geometry == poleGeometry) {
+    } else if (object.geometry == poleHitAreaGeometry) {
       return poleIds[object.id];
     }
   }
@@ -491,8 +512,6 @@ function game() {
   }
 
   function render() {
-
-
     var mouse3D = projector.unprojectVector(mouse2D.clone(), camera);
     ray.direction = mouse3D.subSelf(camera.position).normalize();
 
