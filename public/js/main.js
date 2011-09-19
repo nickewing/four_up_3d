@@ -60,6 +60,7 @@ function game() {
       mouseDeltaX            = 0,
       lastMouseX,
       dragging               = false,
+      dragKeyDown            = false,
       ray,
       rolledOverObject,
       theta                  = 45,
@@ -358,7 +359,8 @@ function game() {
     document.addEventListener("mousemove", onDocumentMouseMove, false);
     document.addEventListener("mousedown", onDocumentMouseDown, false);
     document.addEventListener("mouseup", onDocumentMouseUp, false);
-    window.addEventListener("keyup", onDocumentKeyPress, false);
+    window.addEventListener("keyup", onDocumentKeyUp, false);
+    window.addEventListener("keydown", onDocumentKeyDown, false);
     window.addEventListener("resize", onWindowResize, false);
     window.addEventListener("contextmenu", onWindowContextMenu, false);
 
@@ -378,9 +380,17 @@ function game() {
     return false;
   }
 
-  function onDocumentKeyPress(event) {
+  function onDocumentKeyUp(event) {
     if (event.keyCode == 78) {
       socket.emit('clear');
+    }
+
+    dragKeyDown = false;
+  }
+
+  function onDocumentKeyDown(event) {
+    if (event.ctrlKey || event.shiftKey) {
+      dragKeyDown = true;
     }
   }
 
@@ -424,7 +434,7 @@ function game() {
 
     event.preventDefault();
 
-    if (event.button == 0) {
+    if (event.button == 0 && !dragKeyDown) {
       if (markedPoleId != null) {
         socket.emit('place', markedPoleId);
       }
