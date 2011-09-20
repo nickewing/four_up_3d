@@ -3,7 +3,8 @@ var requires = [
   "Three",
   "RequestAnimationFrame",
   // "Stats",
-  "/socket.io/socket.io.js"
+  "/socket.io/socket.io.js",
+  "jquery.history"
 ];
 
 require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], function() {
@@ -12,38 +13,38 @@ require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], fun
       if (hasWebGl()) {
         var game = new Game();
 
-        $('html').disableSelection();
-        $('#about_button').
+        $("html").disableSelection();
+        $("#about_button").
           button({icons: {primary: "ui-icon-info"}}).
-          click(function() { $('#about_dialog').dialog('open'); });
-        $('#new_game_button').
+          click(function() { $("#about_dialog").dialog("open"); });
+        $("#new_game_button").
           button().
           click(function() { game.clear(); });
-        $('#about_dialog').dialog({
+        $("#about_dialog").dialog({
           autoOpen: false,
           resizable: false
         });
       } else {
         hideOverlay();
-        $('#requirements_message').show();
+        $("#requirements_message").show();
       }
     });
   });
 });
 
 function showOverlayText(text) {
-  $('#overlay_message span').text(text);
-  $('#overlay_message').show();
+  $("#overlay_message span").text(text);
+  $("#overlay_message").show();
 }
 
 function hideOverlay() {
-  $('#overlay_message').hide();
+  $("#overlay_message").hide();
 }
 
 function hasWebGl() {
   try {
     return !!window.WebGLRenderingContext &&
-      !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' );
+      !!document.createElement("canvas").getContext("experimental-webgl");
   } catch(e) {
     return false;
   }
@@ -109,25 +110,32 @@ function Game() {
     ele.text(label);
   }
 
-  function sessionId() {
-    var hash = window.location.hash;
-
-    if (hash) {
-      return hash.slice(1);
-    }
-  }
-
   function connect() {
+    var sessionId,
+        connected = false;
+
     socket = io.connect();
+
+    function setupIfReady() {
+      if (sessionId != null && connected) {
+        socket.emit("setup", {sessionId: sessionId});
+      }
+    }
     
     socket.on("connect", function() {
       // console.log("connected");
-      socket.emit("setup", {sessionId: sessionId()});
+      connected = true;
+      setupIfReady();
+    });
+
+    $.history.init(function(hash) {
+      sessionId = hash;
+      setupIfReady();
     });
 
     socket.on("disconnect", function() {
-      // console.log('disconnected');
-      showOverlayText('Disconnected!  Retrying connection...');
+      // console.log("disconnected");
+      showOverlayText("Disconnected!  Retrying connection...");
     });
 
     socket.on("setup", function(data) {
@@ -140,6 +148,7 @@ function Game() {
     });
 
     socket.on("placement", function(data) {
+      // console.log("placement");
       // console.log(data);
       addPieceToPole(data.poleId, data.playerId);
     });
@@ -264,8 +273,8 @@ function Game() {
   function drawStats() {
     if (typeof(Stats) !== "undefined") {
       stats = new Stats();
-      stats.domElement.style.position = 'absolute';
-      stats.domElement.style.top = '0px';
+      stats.domElement.style.position = "absolute";
+      stats.domElement.style.top = "0px";
       container.appendChild(stats.domElement);
     }
   }
@@ -352,8 +361,8 @@ function Game() {
   }
 
   function init() {
-    container = $('<div></div>');
-    $('#render_area').append(container);
+    container = $("<div></div>");
+    $("#render_area").append(container);
 
     scene = new THREE.Scene();
 
@@ -383,14 +392,14 @@ function Game() {
     window.addEventListener("resize", onWindowResize, false);
     window.addEventListener("contextmenu", onWindowContextMenu, false);
 
-    $('#game_ui').show();
+    $("#game_ui").show();
 
     loadSound();
   }
 
   function loadSound() {
     if (window.Audio) {
-      dropSound = new Audio('/sounds/drop.wav');
+      dropSound = new Audio("/sounds/drop.wav");
     }
   }
 
@@ -401,7 +410,7 @@ function Game() {
 
   function onDocumentKeyUp(event) {
     if (event.keyCode == 78) {
-      socket.emit('clear');
+      socket.emit("clear");
     }
 
     dragKeyDown = false;
@@ -455,7 +464,7 @@ function Game() {
 
     if (event.button == 0 && !dragKeyDown) {
       if (markedPoleId != null) {
-        socket.emit('place', markedPoleId);
+        socket.emit("placement", markedPoleId);
       }
     } else {
       dragging = true;
@@ -533,6 +542,6 @@ function Game() {
   animate();
 
   this.clear = function() {
-    socket.emit('clear');
+    socket.emit("clear");
   }
 }

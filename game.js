@@ -4,10 +4,11 @@ var Board = require('./board').Board,
 
 function Game(sessionId) {
   var board,
-      players = [false, false],
+      joined       = false,
+      players      = [false, false],
       playerId,
-      subscribers = [],
-      dbClient = redis.createClient()
+      listeners    = [],
+      dbClient     = redis.createClient()
       dbSubscriber = redis.createClient();
 
   function debug(message) {
@@ -24,9 +25,9 @@ function Game(sessionId) {
 
   function save(cb) {
     var gameData = JSON.stringify({
-          placements: board.placements,
-          players: players
-        });
+      placements: board.placements,
+      players: players
+    });
 
     dbClient.set(dbKey(), gameData, function(err) {
       if (err) {
@@ -58,16 +59,16 @@ function Game(sessionId) {
     });
   }
 
-  function updateSubscribers(data) {
-    var len = subscribers.length;
+  function updateListeners(data) {
+    var len = listeners.length;
     for (var i = 0; i < len; i++) {
-      subscribers[i](data);
+      listeners[i](data);
     }
   }
 
   function onDbMessage(channel, data) {
     load(function() {
-      updateSubscribers(JSON.parse(data));
+      updateListeners(JSON.parse(data));
     });
   }
 
@@ -77,12 +78,19 @@ function Game(sessionId) {
     });
   }
 
-  this.onUpdate = function(cb) {
-    subscribers.push(cb);
+  this.addListener = function(cb) {
+    var listenerId = listeners.length;
+    listeners.push(cb);
+    return listenerId;
   };
+
+  this.removeListener = function(listenerId) {
+    listeners.splice(listenerId);
+  }
 
   this.placePiece = function(poleId) {
     if (board.placePiece(poleId, playerId)) {
+      debug("Publish placement: " + poleId);
       publishDbUpdate({
         type: "placement",
         poleId: poleId,
@@ -108,20 +116,34 @@ function Game(sessionId) {
     if (!playerId) {
       playerId = Game.OBSERVER;
     }
-    save(cb);
+
+    save(function() {
+      joined = true;
+      cb();
+    });
   }
 
-  this.leave = function() {
+  function leave() {
     debug('Player left: ' + playerId);
-    if (playerId <= 2)
+    if (playerId <= 2) {
       players[playerId - 1] = false;
+    }
     save();
+  }
+
+  this.destroy = function() {
+    if (joined) {
+      leave();
+    }
+
+    dbClient.end();
+    dbSubscriber.end();
   };
 
   var self = this;
   load(function() {
     join(function() {
-      updateSubscribers({
+      updateListeners({
         type: "setup",
         sessionId: sessionId,
         placements: board.placements,

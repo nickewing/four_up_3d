@@ -15,32 +15,44 @@ app.listen(3000, function () {
 });
 
 var io = sio.listen(app);
-io.set('log level', 1);
+io.set("log level", 1);
 
-io.sockets.on('connection', function(socket) {
+io.sockets.on("connection", function(socket) {
   var game;
 
-  socket.on('setup', function(data) {
-    console.log(data);
+  socket.on("setup", function(data) {
+    console.log('setup');
+
+    if (game) {
+      game.destroy();
+    }
+
     game = new Game(data.sessionId || Game.generateNewSessionId());
 
-    socket.on('disconnect', function() {
-      game.leave();
-    });
-
-    socket.on('place', function(poleId) {
-      game.placePiece(poleId);
-    });
-
-    socket.on('clear', function() {
-      game.reset();
-    });
-
-    game.onUpdate(function(data) {
+    game.addListener(function(data) {
       var type = data.type;
       delete data.type;
       socket.emit(type, data);
     });
+  });
+
+  socket.on("disconnect", function() {
+    if (game) {
+      game.destroy();
+    }
+  });
+
+  socket.on("placement", function(poleId) {
+    console.log("placement");
+    if (game) {
+      game.placePiece(poleId);
+    }
+  });
+
+  socket.on("clear", function() {
+    if (game) {
+      game.reset();
+    }
   });
 
 });
