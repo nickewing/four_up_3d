@@ -1,36 +1,33 @@
 function GameRenderer() {
-  var self                   = this,
+  var self                 = this,
       stats,
-      container,
       camera,
       scene,
       renderer,
       projector,
       mouse2D,
-      mouseDeltaX            = 0,
+      mouseDeltaX          = 0,
       lastMouseX,
-      dragging               = false,
-      dragKeyDown            = false,
+      dragging             = false,
+      dragKeyDown          = false,
       ray,
-      theta                  = 45,
-      darkMaterials          = smoothMaterial(self.colors.darkPiece),
-      lightMaterials         = smoothMaterial(self.colors.lightPiece),
+      theta                = 45,
+      darkMaterials        = smoothMaterial(self.colors.darkPiece),
+      lightMaterials       = smoothMaterial(self.colors.lightPiece),
       markerObject,
       markedPoleId,
       pieceGeometry,
       poleGeometry,
       poleHitAreaGeometry,
+      poleIds              = {},
+      polePieceCount       = [],
+      poleZeroCoord        = -300,
       markerGeometry,
-      pieces                 = [],
-      piecePoleIds           = {},
-      poleIds                = {},
-      polePieceCount         = [],
-      poleZeroCoord          = -300,
-      socket,
-      dropSound,
-      debug                  = false,
-      listeners              = [],
-      placementEnabled       = false;
+      pieces               = [],
+      piecePoleIds         = {},
+      debug                = false,
+      listeners            = [],
+      placementEnabled     = false;
    
   function smoothMaterial(color) {
     return [
@@ -110,7 +107,7 @@ function GameRenderer() {
     scene.addObject(plane);
   }
 
-  function drawStats() {
+  function drawStats(container) {
     if (typeof(Stats) !== "undefined") {
       stats = new Stats();
       stats.domElement.style.position = "absolute";
@@ -204,7 +201,7 @@ function GameRenderer() {
   }
 
   function init() {
-    container = $("<div></div>");
+    var container = $("<div></div>");
     $("#render_area").append(container);
 
     scene = new THREE.Scene();
@@ -226,7 +223,7 @@ function GameRenderer() {
 
     container.append(renderer.domElement);
 
-    drawStats();
+    drawStats(container);
 
     document.addEventListener("mousemove", onDocumentMouseMove, false);
     document.addEventListener("mousedown", onDocumentMouseDown, false);
@@ -235,14 +232,6 @@ function GameRenderer() {
     window.addEventListener("keydown", onDocumentKeyDown, false);
     window.addEventListener("resize", onWindowResize, false);
     window.addEventListener("contextmenu", onWindowContextMenu, false);
-
-    loadSound();
-  }
-
-  function loadSound() {
-    if (window.Audio) {
-      dropSound = new Audio("/sounds/drop.wav");
-    }
   }
 
   function onWindowContextMenu(event) {
@@ -407,10 +396,6 @@ function GameRenderer() {
 
     piecePoleIds[piece.id] = poleId;
     polePieceCount[poleId] = y + 1;
-
-    if (dropSound) {
-      dropSound.play();
-    }
   }
 
   self.clear = function() {

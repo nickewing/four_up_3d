@@ -1,5 +1,10 @@
 (function() {
-  var gameRenderer;
+  var gameRenderer,
+      dropSound;
+
+  if (window.Audio) {
+    dropSound = new Audio("/sounds/drop.wav");
+  }
 
   require(["http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"], function() {
     require([
@@ -120,6 +125,10 @@
 
     socket.on("placement", function(data) {
       gameRenderer.addPieceToPole(data.poleId, data.playerId);
+
+      if (dropSound) {
+        dropSound.play();
+      }
     });
 
     socket.on("clear_board", function(data) {
