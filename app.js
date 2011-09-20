@@ -42,10 +42,10 @@ io.sockets.on("connection", function(socket) {
     }
   });
 
-  socket.on("placement", function(poleId) {
+  socket.on("placement", function(data) {
     console.log("placement");
     if (game) {
-      game.placePiece(poleId);
+      game.placePiece(data.poleId);
     }
   });
 
