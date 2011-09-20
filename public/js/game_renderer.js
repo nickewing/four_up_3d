@@ -1,5 +1,6 @@
 function GameRenderer() {
-  var stats,
+  var self                   = this,
+      stats,
       container,
       camera,
       scene,
@@ -12,14 +13,8 @@ function GameRenderer() {
       dragKeyDown            = false,
       ray,
       theta                  = 45,
-      darkColor              = 0x4B3621,
-      darkSelectedColor      = 0x633614,
-      lightColor             = 0xFFF5EE,
-      lightSelectedColor     = 0xFFF5FF,
-      markerColor            = 0x990000,
-      darkMaterials          = smoothMaterial(darkColor, 0.5),
-      lightMaterials         = smoothMaterial(lightColor),
-      markerMaterials        = flatMaterial(markerColor),
+      darkMaterials          = smoothMaterial(self.colors.darkPiece),
+      lightMaterials         = smoothMaterial(self.colors.lightPiece),
       markerObject,
       markedPoleId,
       pieceGeometry,
@@ -36,7 +31,6 @@ function GameRenderer() {
       debug                  = false,
       listeners              = [],
       placementEnabled       = false;
-      self                   = this;
    
   function smoothMaterial(color) {
     return [
@@ -79,7 +73,7 @@ function GameRenderer() {
   function drawPoles() {
     for (var x = 0; x < 4; x++) {
       for (var z = 0; z < 4; z++) {
-        var pole = new THREE.Mesh(poleGeometry, smoothMaterial(0x999999));
+        var pole = new THREE.Mesh(poleGeometry, smoothMaterial(self.colors.pole));
         pole.position.x = poleZeroCoord + x * 200;
         pole.position.y = 200;
         pole.position.z = poleZeroCoord + z * 200;
@@ -109,7 +103,8 @@ function GameRenderer() {
   }
 
   function drawTable() {
-    var plane = new THREE.Mesh(new THREE.CubeGeometry(1000, 1000, 50), flatMaterial(0x888888));
+    var plane = new THREE.Mesh(new THREE.CubeGeometry(1000, 1000, 50),
+                               flatMaterial(self.colors.table));
     plane.position.y -= 25;
     plane.rotation.x = - 90 * Math.PI / 180;
     scene.addObject(plane);
@@ -128,7 +123,7 @@ function GameRenderer() {
     var poleCoods = poleCordsFromPoleId(poleId);
 
     var material =
-      new THREE.MeshLambertMaterial({color: 0x990000,
+      new THREE.MeshLambertMaterial({color: self.colors.marker,
                                      opacity: 0.6,
                                      shading: THREE.flatShading});
     material.transparent = true;
@@ -168,10 +163,12 @@ function GameRenderer() {
   }
 
   function setLights() {
-    var ambientLight = new THREE.AmbientLight(0x606060);
+    var ambientLight =
+      new THREE.AmbientLight(self.colors.ambientLight);
     scene.addLight(ambientLight);
 
-    var directionalLight = new THREE.DirectionalLight(0x999999);
+    var directionalLight =
+      new THREE.DirectionalLight(self.colors.directionalLight1);
     directionalLight.position.x = -0.74;
     directionalLight.position.y =  0.93;
     directionalLight.position.z =  0.57;
@@ -179,7 +176,8 @@ function GameRenderer() {
     directionalLight.position.normalize();
     scene.addLight(directionalLight);
 
-    var directionalLight = new THREE.DirectionalLight(0x808080);
+    var directionalLight =
+      new THREE.DirectionalLight(self.colors.directionalLight2);
     directionalLight.position.x = -0.13;
     directionalLight.position.y =  0.65;
     directionalLight.position.z = -0.73;
@@ -430,3 +428,14 @@ function GameRenderer() {
   init();
   animate();
 }
+
+GameRenderer.prototype.colors = {
+  darkPiece:         0x4F2B0F,
+  lightPiece:        0xCCD8DD,
+  pole:              0x999999,
+  marker:            0x990000,
+  table:             0x4F2B0F,
+  ambientLight:      0x606060,
+  directionalLight1: 0x999999,
+  directionalLight2: 0x808080
+};

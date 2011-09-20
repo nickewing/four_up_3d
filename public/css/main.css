@@ -10,19 +10,22 @@ body {
   font-size: 14px;
   cursor:default;
 
-  background-image: linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-  background-image: -o-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-  background-image: -moz-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-  background-image: -webkit-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
-  background-image: -ms-linear-gradient(bottom, rgb(31,33,31) 20%, rgb(102,110,110) 77%);
+background-image: linear-gradient(bottom, rgb(82,65,49) 7%, rgb(152,114,77) 54%, rgb(152,114,77) 77%);
+background-image: -o-linear-gradient(bottom, rgb(82,65,49) 7%, rgb(152,114,77) 54%, rgb(152,114,77) 77%);
+background-image: -moz-linear-gradient(bottom, rgb(82,65,49) 7%, rgb(152,114,77) 54%, rgb(152,114,77) 77%);
+background-image: -webkit-linear-gradient(bottom, rgb(82,65,49) 7%, rgb(152,114,77) 54%, rgb(152,114,77) 77%);
+background-image: -ms-linear-gradient(bottom, rgb(82,65,49) 7%, rgb(152,114,77) 54%, rgb(152,114,77) 77%);
 
-  background-image: -webkit-gradient(
-    linear,
-    left bottom,
-    left top,
-    color-stop(0.2, rgb(31,33,31)),
-    color-stop(0.77, rgb(102,110,110))
-  );
+background-image: -webkit-gradient(
+	linear,
+	left bottom,
+	left top,
+	color-stop(0.07, rgb(82,65,49)),
+	color-stop(0.54, rgb(152,114,77)),
+	color-stop(0.77, rgb(152,114,77))
+);
+
+
 }
 
 .ui-button {
