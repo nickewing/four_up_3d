@@ -22,11 +22,11 @@ Board.prototype.placePiece = function(poleId, playerId) {
     if (this.placements[placementId] == 0) {
       this.placements[placementId] = playerId;
 
-      return true;
+      return [x, y, z];
     }
   }
 
-  return false;
+  return null;
 }
 
 exports.Board = Board;

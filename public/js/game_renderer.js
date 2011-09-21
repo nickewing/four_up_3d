@@ -6,28 +6,30 @@ function GameRenderer() {
       renderer,
       projector,
       mouse2D,
-      mouseDeltaX          = 0,
+      mouseDeltaX             = 0,
       lastMouseX,
-      dragging             = false,
-      dragKeyDown          = false,
+      dragging                = false,
+      dragKeyDown             = false,
       ray,
-      theta                = 45,
-      darkMaterials        = smoothMaterial(self.colors.darkPiece),
-      lightMaterials       = smoothMaterial(self.colors.lightPiece),
+      theta                   = 45,
+      darkMaterials           = smoothMaterial(self.colors.darkPiece),
+      lightMaterials          = smoothMaterial(self.colors.lightPiece),
       markerObject,
       markedPoleId,
       pieceGeometry,
       poleGeometry,
       poleHitAreaGeometry,
-      poleIds              = {},
-      polePieceCount       = [],
-      poleZeroCoord        = -300,
+      poleIds                 = {},
+      polePieceCount          = [],
+      poleZeroCoord           = -300,
+      pieceMarkers        = [],
+      pieceMarkerGeometry,
       markerGeometry,
-      pieces               = [],
-      piecePoleIds         = {},
-      debug                = false,
-      listeners            = [],
-      placementEnabled     = false;
+      pieces                  = [],
+      piecePoleIds            = {},
+      debug                   = false,
+      listeners               = [],
+      placementEnabled        = false;
    
   function smoothMaterial(color) {
     return [
@@ -53,14 +55,21 @@ function GameRenderer() {
     pieceGeometry.computeVertexNormals();
 
     markerGeometry = new THREE.CylinderGeometry(6, 1, 30, 60, 10, 0);
+
+    pieceMarkerGeometry = new THREE.SphereGeometry(55, 55, 55);
+    pieceMarkerGeometry.computeVertexNormals();
+  }
+
+  function positionPieceObject(x, y, z, object) {
+    object.position.x = poleZeroCoord + x * 200;
+    object.position.y = 50 + y * 100;
+    object.position.z = poleZeroCoord + z * 200;
+    object.rotation.x = 90 * Math.PI / 180;
   }
 
   function drawPiece(x, y, z, materials) {
     var piece = new THREE.Mesh(pieceGeometry, materials);
-    piece.position.x = poleZeroCoord + x * 200;
-    piece.position.y = 50 + y * 100;
-    piece.position.z = poleZeroCoord + z * 200;
-    piece.rotation.x = 90 * Math.PI / 180;
+    positionPieceObject(x, y, z, piece);
     scene.addObject(piece);
     pieces.push(piece);
 
@@ -120,7 +129,7 @@ function GameRenderer() {
     var poleCoods = poleCordsFromPoleId(poleId);
 
     var material =
-      new THREE.MeshLambertMaterial({color: self.colors.marker,
+      new THREE.MeshLambertMaterial({color: self.colors.poleMarker,
                                      opacity: 0.6,
                                      shading: THREE.flatShading});
     material.transparent = true;
@@ -323,17 +332,23 @@ function GameRenderer() {
   }
 
   function setPoleMarkerIfMouseOverPole() {
-    var intersects = ray.intersectScene(scene);
-    if (intersects.length > 0) {
-      var object = intersects[0].object,
-      poleId = getPoleId(object);
+    var intersects = ray.intersectScene(scene),
+        numIntersects = intersects.length;
 
-      if (poleId >= 0 && polePieceCount[poleId] < 4) {
-        markPole(poleId);
-      } else {
-        removePoleMarker();
+    if (numIntersects > 0) {
+      for (var i = 0; i < numIntersects; i++) {
+        var object = intersects[i].object,
+        poleId = getPoleId(object);
+
+        if (poleId >= 0 && polePieceCount[poleId] < 4) {
+          markPole(poleId);
+
+          return;
+        }
       }
     }
+
+    removePoleMarker();
   }
 
   function render() {
@@ -415,6 +430,29 @@ function GameRenderer() {
     }
   }
 
+  self.drawPieceMarker = function(x, y, z) {
+    var material =
+      new THREE.MeshLambertMaterial({color: self.colors.pieceMarker,
+                                     opacity: 0.4,
+                                     shading: THREE.flatShading});
+    material.transparent = true;
+
+    var marker = new THREE.Mesh(pieceMarkerGeometry, material);
+    positionPieceObject(x, y, z, marker);
+    scene.addObject(marker);
+    pieces.push(marker);
+
+    return marker;
+  }
+
+  self.clearPieceMarkers = function() {
+    var len = pieceMarkers.length;
+
+    for (var i = 0; i < len; i++) {
+      scene.removeObject(pieceMarkers[i]);
+    }
+  }
+
   init();
   animate();
 }
@@ -423,8 +461,9 @@ function GameRenderer() {
 GameRenderer.prototype.colors = {
   darkPiece:         0x4F2B0F,
   lightPiece:        0xCCD8DD,
+  pieceMarker:       0x990000,
   pole:              0x999999,
-  marker:            0x990000,
+  poleMarker:        0x990000,
   table:             0x4F2B0F,
   ambientLight:      0x606060,
   directionalLight1: 0x999999,

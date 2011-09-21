@@ -4,11 +4,12 @@ var Board = require('./board').Board,
 
 function Game(sessionId) {
   var board,
-      joined       = false,
-      players      = [false, false],
+      joined         = false,
+      players        = [false, false],
+      lastPlacements = [],
       playerId,
-      turn         = Game.PLAYER_ONE,
-      listeners    = [],
+      turn           = Game.PLAYER_ONE,
+      listeners      = [],
       dbClient,
       dbSubscriber;
 
@@ -65,7 +66,8 @@ function Game(sessionId) {
     var gameData = JSON.stringify({
       placements: board.placements,
       players: players,
-      turn: turn
+      turn: turn,
+      lastPlacements: lastPlacements
     });
 
     dbClient.set(dbKey(), gameData, function(err) {
@@ -92,6 +94,7 @@ function Game(sessionId) {
         board = new Board(gameData.placements);
         players = gameData.players;
         turn = gameData.turn;
+        lastPlacements = gameData.lastPlacements;
       } else {
         debug("New game " + dbKey());
         board = new Board();
@@ -115,6 +118,7 @@ function Game(sessionId) {
       updateListeners({
         type: "state_update",
         placements: board.placements,
+        lastPlacements: lastPlacements,
         turn: turn
       });
     });
@@ -140,7 +144,10 @@ function Game(sessionId) {
 
   this.placePiece = function(poleId) {
     load(function() {
-      if (turn == playerId && board.placePiece(poleId, playerId)) {
+      var placementCoord = board.placePiece(poleId, playerId);
+      if (turn == playerId && placementCoord) {
+        lastPlacements[playerId - 1] = placementCoord;
+
         nextPlayersTurn();
 
         save(function() {
@@ -153,6 +160,7 @@ function Game(sessionId) {
 
   this.reset = function() {
     board.clear();
+    lastPlacements = [];
     save(function() {
       publishDbUpdate();
     });
@@ -212,6 +220,7 @@ function Game(sessionId) {
           sessionId: sessionId,
           placements: board.placements,
           playerId: playerId,
+          lastPlacements: lastPlacements,
           turn: turn
         });
       });

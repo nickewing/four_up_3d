@@ -90,15 +90,33 @@
       }
     }
 
+    function updateLastPlacementsMarkers(lastPlacements) {
+      gameRenderer.clearPieceMarkers();
+
+      if (lastPlacements[0]) {
+        gameRenderer.drawPieceMarker.apply(gameRenderer, lastPlacements[0]);
+      }
+
+      if (lastPlacements[1]) {
+        gameRenderer.drawPieceMarker.apply(gameRenderer, lastPlacements[1]);
+      }
+    }
+
     function onStateUpdate(data) {
       var status;
 
       gameRenderer.drawPieces(data.placements);
 
+      updateLastPlacementsMarkers(data.lastPlacements);
+
       if (data.turn == playerId) {
         status = "Your turn";
-      } else {
+      } else if (playerId != 3) {
         status = "Opponent's turn";
+      } else if (data.turn == 1) {
+        status = "Light's turn";
+      } else if (data.turn == 2) {
+        status = "Dark's turn";
       }
 
       $('#status_message').text(status);
@@ -147,10 +165,6 @@
       if (dropSound) {
         dropSound.play();
       }
-    });
-
-    socket.on("clear_board", function(data) {
-      gameRenderer.drawPieces([]);
     });
 
     gameRenderer.addListener(function(data) {
