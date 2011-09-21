@@ -109,12 +109,15 @@ function Game(sessionId) {
   function onDbMessage(channel, data) {
     debug("Subscriber message: " + data);
     load(function() {
-      updateListeners(JSON.parse(data));
+      updateListeners({
+        type: "state_update",
+        placements: board.placements
+      });
     });
   }
 
   function publishDbUpdate(data) {
-    dbClient.publish(dbKey(), JSON.stringify(data), function(err) {
+    dbClient.publish(dbKey(), "", function(err) {
       if (err) {
         debug("ERR: " + err);
       }
@@ -136,11 +139,7 @@ function Game(sessionId) {
       if (board.placePiece(poleId, playerId)) {
         save(function() {
           debug("Publish placement: " + poleId);
-          publishDbUpdate({
-            type: "placement",
-            poleId: poleId,
-            playerId: playerId
-          });
+          publishDbUpdate();
         });
       }
     });
@@ -149,7 +148,7 @@ function Game(sessionId) {
   this.reset = function() {
     board.clear();
     save(function() {
-      publishDbUpdate({type: "clear_board"});
+      publishDbUpdate();
     });
   };
 

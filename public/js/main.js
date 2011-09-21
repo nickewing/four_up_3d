@@ -114,7 +114,7 @@
 
       gameRenderer.drawPieces(data.placements);
 
-      playerId = data.playerId;
+      gameRenderer.playerId = playerId = data.playerId;
 
       if (playerId >= 1 && playerId <= 2) {
         gameRenderer.enablePlacement(true);
@@ -126,10 +126,12 @@
       hideOverlay();
     });
 
-    socket.on("placement", function(data) {
-      console.log("placement");
+    socket.on("state_update", function(data) {
+      console.log("state_update");
       console.log(data);
-      gameRenderer.addPieceToPole(data.poleId, data.playerId);
+
+      // gameRenderer.addPieceToPole(data.poleId, data.playerId);
+      gameRenderer.drawPieces(data.placements);
 
       if (dropSound) {
         dropSound.play();
