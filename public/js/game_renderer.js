@@ -414,6 +414,7 @@ function GameRenderer() {
   animate();
 }
 
+// http://www.colourlovers.com/palette/1766061/Latte_feather
 GameRenderer.prototype.colors = {
   darkPiece:         0x4F2B0F,
   lightPiece:        0xCCD8DD,

@@ -109,6 +109,9 @@
     });
 
     socket.on("setup", function(data) {
+      console.log("setup");
+      console.log(data);
+
       gameRenderer.drawPieces(data.placements);
 
       playerId = data.playerId;
@@ -124,6 +127,8 @@
     });
 
     socket.on("placement", function(data) {
+      console.log("placement");
+      console.log(data);
       gameRenderer.addPieceToPole(data.poleId, data.playerId);
 
       if (dropSound) {

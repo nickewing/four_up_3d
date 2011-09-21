@@ -9,16 +9,18 @@ app.configure(function () {
   app.use(express.static(__dirname + '/public'));
 });
 
-app.listen(3000, function () {
+app.listen(8080, function () {
   var addr = app.address();
-  console.log('   app listening on http://' + addr.address + ':' + addr.port);
+  console.log('Listening on http://' + addr.address + ':' + addr.port);
 });
 
 var io = sio.listen(app);
-io.set("log level", 1);
+io.set("log level", 0);
 
 io.sockets.on("connection", function(socket) {
   var game;
+
+  console.log("connect");
 
   socket.on("setup", function(data) {
     console.log('setup');
@@ -37,6 +39,7 @@ io.sockets.on("connection", function(socket) {
   });
 
   socket.on("disconnect", function() {
+    console.log("disconnect");
     if (game) {
       game.destroy();
     }

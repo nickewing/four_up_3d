@@ -8,8 +8,45 @@ function Game(sessionId) {
       players      = [false, false],
       playerId,
       listeners    = [],
-      dbClient     = redis.createClient()
-      dbSubscriber = redis.createClient();
+      dbClient,
+      dbSubscriber;
+
+  function connect(cb) {
+    var dbClientReady     = false,
+        dbSubscriberReady = false;
+
+    function callbackWhenDone() {
+      if (dbClientReady && dbSubscriberReady) {
+        debug("fully connected");
+        cb();
+      }
+    }
+
+    function onError(err) {
+      debug("DB ERR: " + err);
+    }
+
+    dbClient     = redis.createClient();
+    dbSubscriber = redis.createClient();
+
+    dbClient.on("ready", function() {
+      dbClientReady = true;
+      callbackWhenDone();
+    });
+
+    dbSubscriber.on("ready", function() {
+      dbSubscriber.subscribe(dbKey());
+      dbSubscriber.on("message", onDbMessage);
+
+      dbSubscriber.on("subscribe", function() {
+        dbSubscriberReady = true;
+        callbackWhenDone();
+      });
+    });
+
+    dbClient.on("error", onError);
+    dbSubscriber.on("error", onError);
+  }
 
   function debug(message) {
     var str = "DEBUG [" + dbKey() + "]";
@@ -31,21 +68,24 @@ function Game(sessionId) {
 
     dbClient.set(dbKey(), gameData, function(err) {
       if (err) {
-        debug(err);
+        debug("ERR: " + err);
       } else {
         // debug("Saved: " + gameData);
         debug("Saved");
       }
+
       if (cb) cb();
     });
   }
 
   function load(cb) {
     dbClient.get(dbKey(), function(err, value) {
-      if (value) {
+      if (err) {
+        debug("ERR: " + err);
+      } else if (value) {
         var gameData = JSON.parse(value);
-        // debug("Found game: " + value);
-        debug("Loaded");
+        debug("Found game: " + value);
+        // debug("Loaded");
 
         board = new Board(gameData.placements);
         players = gameData.players;
@@ -55,7 +95,7 @@ function Game(sessionId) {
         board.clear();
       }
 
-      if (cb) cb()
+      if (cb) cb();
     });
   }
 
@@ -67,14 +107,17 @@ function Game(sessionId) {
   }
 
   function onDbMessage(channel, data) {
+    debug("Subscriber message: " + data);
     load(function() {
       updateListeners(JSON.parse(data));
     });
   }
 
   function publishDbUpdate(data) {
-    save(function() {
-      dbClient.publish(dbKey(), JSON.stringify(data));
+    dbClient.publish(dbKey(), JSON.stringify(data), function(err) {
+      if (err) {
+        debug("ERR: " + err);
+      }
     });
   }
 
@@ -89,19 +132,25 @@ function Game(sessionId) {
   }
 
   this.placePiece = function(poleId) {
-    if (board.placePiece(poleId, playerId)) {
-      debug("Publish placement: " + poleId);
-      publishDbUpdate({
-        type: "placement",
-        poleId: poleId,
-        playerId: playerId
-      });
-    }
+    load(function() {
+      if (board.placePiece(poleId, playerId)) {
+        save(function() {
+          debug("Publish placement: " + poleId);
+          publishDbUpdate({
+            type: "placement",
+            poleId: poleId,
+            playerId: playerId
+          });
+        });
+      }
+    });
   };
 
   this.reset = function() {
     board.clear();
-    publishDbUpdate({type: "clear_board"});
+    save(function() {
+      publishDbUpdate({type: "clear_board"});
+    });
   };
 
   function join(cb) {
@@ -141,19 +190,19 @@ function Game(sessionId) {
   };
 
   var self = this;
-  load(function() {
-    join(function() {
-      updateListeners({
-        type: "setup",
-        sessionId: sessionId,
-        placements: board.placements,
-        playerId: playerId
+
+  connect(function() {
+    load(function() {
+      join(function() {
+        updateListeners({
+          type: "setup",
+          sessionId: sessionId,
+          placements: board.placements,
+          playerId: playerId
+        });
       });
     });
   });
-
-  dbSubscriber.subscribe(dbKey());
-  dbSubscriber.on("message", onDbMessage);
 }
 
 Game.PLAYER_ONE = 1;
