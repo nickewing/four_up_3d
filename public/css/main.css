@@ -37,6 +37,13 @@ body {
   padding: 4px;
 }
 
+#status_message {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 4px;
+}
+
 #bottom_left_buttons {
   position: absolute;
   bottom: 10px;

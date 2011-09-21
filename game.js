@@ -7,6 +7,7 @@ function Game(sessionId) {
       joined       = false,
       players      = [false, false],
       playerId,
+      turn         = Game.PLAYER_ONE,
       listeners    = [],
       dbClient,
       dbSubscriber;
@@ -63,7 +64,8 @@ function Game(sessionId) {
   function save(cb) {
     var gameData = JSON.stringify({
       placements: board.placements,
-      players: players
+      players: players,
+      turn: turn
     });
 
     dbClient.set(dbKey(), gameData, function(err) {
@@ -89,6 +91,7 @@ function Game(sessionId) {
 
         board = new Board(gameData.placements);
         players = gameData.players;
+        turn = gameData.turn;
       } else {
         debug("New game " + dbKey());
         board = new Board();
@@ -111,7 +114,8 @@ function Game(sessionId) {
     load(function() {
       updateListeners({
         type: "state_update",
-        placements: board.placements
+        placements: board.placements,
+        turn: turn
       });
     });
   }
@@ -136,7 +140,9 @@ function Game(sessionId) {
 
   this.placePiece = function(poleId) {
     load(function() {
-      if (board.placePiece(poleId, playerId)) {
+      if (turn == playerId && board.placePiece(poleId, playerId)) {
+        nextPlayersTurn();
+
         save(function() {
           debug("Publish placement: " + poleId);
           publishDbUpdate();
@@ -179,6 +185,14 @@ function Game(sessionId) {
     save();
   }
 
+  function nextPlayersTurn() {
+    if (turn == Game.PLAYER_ONE) {
+      turn = Game.PLAYER_TWO;
+    } else {
+      turn = Game.PLAYER_ONE;
+    }
+  }
+
   this.destroy = function() {
     if (joined) {
       leave();
@@ -197,7 +211,8 @@ function Game(sessionId) {
           type: "setup",
           sessionId: sessionId,
           placements: board.placements,
-          playerId: playerId
+          playerId: playerId,
+          turn: turn
         });
       });
     });

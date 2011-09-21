@@ -64,11 +64,7 @@
   }
 
   function showPlayerLabel(playerId) {
-    var ele, label;
-    if (!(ele = $("#player_name")).length) {
-      ele = $('<div id="player_name"></div>');
-      $(document.body).append(ele);
-    }
+    var label;
 
     if (playerId == 1) {
       label = "Light";
@@ -77,7 +73,8 @@
     } else {
       label = "Observer";
     }
-    ele.text(label);
+
+    $('#player_name').text(label);
   }
 
   function connect() {
@@ -93,14 +90,32 @@
       }
     }
 
+    function onStateUpdate(data) {
+      var status;
+
+      gameRenderer.drawPieces(data.placements);
+
+      if (data.turn == playerId) {
+        status = "Your turn";
+      } else {
+        status = "Opponent's turn";
+      }
+
+      $('#status_message').text(status);
+
+      gameRenderer.enablePlacement(data.turn == playerId);
+    }
+
     socket.on("connect", function() {
       connected = true;
       setupIfReady();
     });
 
     $.history.init(function(hash) {
-      sessionId = hash;
-      setupIfReady();
+      if (sessionId != hash) {
+        sessionId = hash;
+        setupIfReady();
+      }
     });
 
     socket.on("disconnect", function() {
@@ -112,16 +127,13 @@
       console.log("setup");
       console.log(data);
 
-      gameRenderer.drawPieces(data.placements);
+      window.location.hash = sessionId = data.sessionId;
 
       gameRenderer.playerId = playerId = data.playerId;
-
-      if (playerId >= 1 && playerId <= 2) {
-        gameRenderer.enablePlacement(true);
-      }
-
       showPlayerLabel(playerId);
-      window.location.hash = data.sessionId;
+
+      onStateUpdate(data);
+
 
       hideOverlay();
     });
@@ -130,8 +142,7 @@
       console.log("state_update");
       console.log(data);
 
-      // gameRenderer.addPieceToPole(data.poleId, data.playerId);
-      gameRenderer.drawPieces(data.placements);
+      onStateUpdate(data);
 
       if (dropSound) {
         dropSound.play();

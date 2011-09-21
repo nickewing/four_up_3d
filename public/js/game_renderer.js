@@ -282,7 +282,6 @@ function GameRenderer() {
 
     if (event.button == 0 && !dragKeyDown) {
       if (markedPoleId != null) {
-        console.log(self.playerId);
         self.addPieceToPole(markedPoleId, self.playerId);
         updateListeners({
           type: "placement",
@@ -410,6 +409,10 @@ function GameRenderer() {
 
   self.enablePlacement = function(state) {
     placementEnabled = !!state;
+
+    if (!placementEnabled) {
+      removePoleMarker();
+    }
   }
 
   init();
