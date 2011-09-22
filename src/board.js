@@ -1,32 +1,116 @@
-function Board(placements) {
-  this.placements = placements;
-}
+(function() {
+  "use strict";
 
-Board.prototype.clear = function() {
-  this.placements = [];
-  for (var i = 0; i < 64; i++) {
-    this.placements[i] = 0;
+  function Board(placements) {
+    this.placements = placements || [];
+    this.scores = [0, 0];
   }
-}
 
-Board.prototype.placementsToString = function() {
-  return this.placements.join('');
-}
+  Board.size = 4;
 
-Board.prototype.placePiece = function(poleId, playerId) {
-  var x = Math.floor(poleId / 4),
-      z = poleId % 4;
+  Board.prototype.clear = function() {
+    this.placements = [];
+    for (var i = 0; i < Board.size * Board.size * Board.size; i++) {
+      this.placements[i] = 0;
+    }
+    this.scores = [0, 0];
+  }
 
-  for (var y = 0; y < 4; y++) {
-    var placementId = x + 4 * (y + 4 * z);
-    if (this.placements[placementId] == 0) {
-      this.placements[placementId] = playerId;
+  Board.prototype.placementsToString = function() {
+    return this.placements.join('');
+  }
 
-      return [x, y, z];
+  Board.prototype.placePiece = function(poleId, playerId) {
+    var x = Math.floor(poleId / Board.size),
+        z = poleId % Board.size;
+
+    for (var y = 0; y < Board.size; y++) {
+      var placementId = this.placementId(x, y, z);
+      if (this.placements[placementId] == 0) {
+        this.placements[placementId] = playerId;
+
+        return [x, y, z];
+      }
+    }
+
+    return null;
+  }
+
+  Board.prototype.placementId = function(x, y, z) {
+    return x + Board.size * (y + Board.size * z);
+  }
+
+  Board.prototype.placementAt = function(x, y, z) {
+    return this.placements[this.placementId(x, y, z)];
+  }
+
+  Board.prototype.scoreLine = function(point, deltas) {
+    var player = this.placementAt.apply(this, point);
+
+    if (!player) return;
+
+    for (var i = 1; i < Board.size; i++) {
+      point[0] += deltas[0];
+      point[1] += deltas[1];
+      point[2] += deltas[2];
+
+      if (this.placementAt.apply(this, point) != player) {
+        return;
+      }
+    }
+
+    this.scores[player - 1] += 1;
+  }
+
+  Board.prototype.score = function() {
+    var x, y, z, points = [];
+
+    this.scores = [0, 0];
+
+    // "vectors"
+    this.scoreLine([0, 0, 0], [1, 1, 1]);
+    this.scoreLine([Board.size - 1, 0, 0], [-1,  1,  1]);
+    this.scoreLine([0, Board.size - 1, 0], [ 1, -1,  1]);
+    this.scoreLine([0, 0, Board.size - 1], [ 1,  1, -1]);
+
+    // verticals
+    for (x = 0; x < Board.size; x++) {
+      for (z = 0; z < Board.size; z++) {
+        this.scoreLine([x, 0, z], [0, 1, 0]);
+      }
+    }
+
+    // diagonal verticals
+    for (x = 0; x < Board.size; x++) {
+      this.scoreLine([x, 0, 0], [0, 1, 1]);
+      this.scoreLine([x, Board.size - 1, 0], [0, -1, 1]);
+    }
+
+    for (z = 0; z < Board.size; z++) {
+      this.scoreLine([0, 0, z], [1, 1, 0]);
+      this.scoreLine([0, Board.size - 1, z], [1, -1, 0]);
+    }
+
+    for (y = 0; y < Board.size; y++) {
+      // diagonal horizontals
+      this.scoreLine([0, y, 0], [1, 0, 1]);
+      this.scoreLine([Board.size - 1, y, 0], [-1, 0, 1]);
+
+      // non-diagonal horizontals
+      for (x = 0; x < Board.size; x++) {
+        this.scoreLine([x, y, 0], [0, 0, 1]);
+      }
+
+      for (z = 0; z < Board.size; z++) {
+        this.scoreLine([0, y, z], [1, 0, 0]);
+      }
     }
   }
 
-  return null;
-}
+  if (typeof(exports) == "undefined") {
+    window.Board = Board;
+  } else {
+    exports.Board = Board;
+  }
 
-exports.Board = Board;
+})();
