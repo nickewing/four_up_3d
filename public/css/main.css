@@ -37,7 +37,7 @@ body {
   padding: 4px;
 }
 
-#status_message {
+#status_panel {
   position: absolute;
   left: 10px;
   top: 10px;

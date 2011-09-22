@@ -14,7 +14,8 @@
       // "vendor/stats",
       "/socket.io/socket.io.js",
       "vendor/jquery.history",
-      "game_renderer"
+      "game_renderer",
+      "board"
     ], function() {
       require.ready(requirementsLoaded);
     });
@@ -80,6 +81,7 @@
   function connect() {
     var sessionId,
         connected = false,
+        board,
         playerId;
 
     socket = io.connect();
@@ -105,6 +107,9 @@
     function onStateUpdate(data) {
       var status;
 
+      board.placements = data.placements;
+      board.score();
+
       gameRenderer.drawPieces(data.placements);
 
       updateLastPlacementsMarkers(data.lastPlacements);
@@ -119,7 +124,9 @@
         status = "Dark's turn";
       }
 
-      $('#status_message').text(status);
+      $('#turn_message').text(status);
+
+      $('#score_message').text(board.scores[0] + " light, " + board.scores[1] + " dark");
 
       gameRenderer.enablePlacement(data.turn == playerId);
     }
@@ -145,13 +152,14 @@
       console.log("setup");
       console.log(data);
 
+      board = new Board();
+
       window.location.hash = sessionId = data.sessionId;
 
       gameRenderer.playerId = playerId = data.playerId;
       showPlayerLabel(playerId);
 
       onStateUpdate(data);
-
 
       hideOverlay();
     });

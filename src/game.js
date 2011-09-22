@@ -1,4 +1,4 @@
-var Board = require('./board').Board,
+var Board = require('../public/js/board').Board,
     redis = require('redis'),
     crypto = require('crypto');
 
