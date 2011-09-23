@@ -59,7 +59,7 @@ function Game(sessionId) {
   }
 
   function dbKey() {
-    return '3dc4.sessions.' + sessionId;
+    return "four_up_3d.sessions." + sessionId;
   }
 
   function save(cb) {
@@ -160,11 +160,13 @@ function Game(sessionId) {
   };
 
   this.reset = function() {
-    board.clear();
-    lastPlacements = [];
-    save(function() {
-      publishDbUpdate();
-    });
+    if (isPlaying()) {
+      board.clear();
+      lastPlacements = [];
+      save(function() {
+        publishDbUpdate();
+      });
+    }
   };
 
   function join(cb) {
@@ -207,6 +209,10 @@ function Game(sessionId) {
     if (players[0]) count++;
     if (players[1]) count++;
     return count;
+  }
+
+  function isPlaying() {
+    return playerId == Game.PLAYER_ONE || playerId == Game.PLAYER_TWO;
   }
 
   this.destroy = function() {
