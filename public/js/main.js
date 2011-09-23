@@ -27,16 +27,29 @@
 
       connect();
 
-      $("html").disableSelection();
+      $("#game_ui").disableSelection();
+      $("input").enableSelection();
+
       $("#about_button").
         button({icons: {primary: "ui-icon-info"}}).
           click(function() { $("#about_dialog").dialog("open"); });
+
       $("#new_game_button").
         button().
           click(function() { gameRenderer.clear(); });
+
       $("#about_dialog").dialog({
         autoOpen: false,
-        resizable: false
+        resizable: false,
+        width: 380,
+        buttons: {"OK": function() {$(this).dialog("close");}}
+      });
+
+      $("#welcome_dialog").dialog({
+        autoOpen: false,
+        resizable: false,
+        width: 500,
+        buttons: {"OK": function() {$(this).dialog("close");}}
       });
 
       $("#game_ui").show();
@@ -46,13 +59,23 @@
     }
   }
 
+  function showWelcomeDialog() {
+    $("#welcome_dialog").dialog("open");
+  }
+
+  function hideWelcomeDialog() {
+    $("#welcome_dialog").dialog("close");
+  }
+
   function showOverlayText(text) {
     $("#overlay_message span").text(text);
     $("#overlay_message").show();
+    $("#status_panel").hide();
   }
 
   function hideOverlay() {
     $("#overlay_message").hide();
+    $("#status_panel").show();
   }
 
   function hasWebGl() {
@@ -68,9 +91,9 @@
     var label;
 
     if (playerId == 1) {
-      label = "Light";
+      label = "Playing as Light";
     } else if (playerId == 2) {
-      label = "Dark";
+      label = "Playing as Dark";
     } else {
       label = "Observer";
     }
@@ -114,6 +137,13 @@
 
       updateLastPlacementsMarkers(data.lastPlacements);
 
+      if (data.players < 2) {
+        $("#waiting_for_player_message").show();
+      } else {
+        $("#waiting_for_player_message").hide();
+        hideWelcomeDialog();
+      }
+
       if (data.turn == playerId) {
         status = "Your turn";
       } else if (playerId != 3) {
@@ -126,7 +156,7 @@
 
       $('#turn_message').text(status);
 
-      $('#score_message').text(board.scores[0] + " light, " + board.scores[1] + " dark");
+      $('#score_message').text(board.scores[0] + " Light, " + board.scores[1] + " Dark");
 
       gameRenderer.enablePlacement(data.turn == playerId);
     }
@@ -137,6 +167,10 @@
     });
 
     $.history.init(function(hash) {
+      $("#current_url").val(window.location.href);
+      $("#current_url").focus();
+      $("#current_url").select();
+
       if (sessionId != hash) {
         sessionId = hash;
         setupIfReady();
@@ -161,6 +195,10 @@
 
       onStateUpdate(data);
 
+      if (data.playerId != 3 && data.players < 2) {
+        showWelcomeDialog();
+      }
+
       hideOverlay();
     });
 
@@ -178,6 +216,7 @@
     gameRenderer.addListener(function(data) {
       var type = data.type;
       delete data.type;
+      console.log(type);
       socket.emit(type, data);
     });
   }

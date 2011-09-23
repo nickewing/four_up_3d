@@ -4,7 +4,6 @@ html, body {
 }
 
 body {
-  background-color: #292929;
   margin: 0;
   overflow: hidden;
   font-size: 14px;
@@ -26,22 +25,55 @@ body {
   );
 }
 
+li {
+  list-style: square;
+}
+
+h1, h2 {
+  margin: 0;
+  padding: 10px 0;
+}
+
+#title {
+  text-shadow: 0.1em 0.1em 0.2em #4F2B0F;
+  color: #B5A642;
+  font: 3em Helvetica;
+  text-transform: capitalize;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px;
+}
+
+#background {
+  background: url(jqueryui/images/ui-bg_diamond_20_372806_10x8.png) 50% 50% repeat;
+  opacity: .3;
+  filter: Alpha(Opacity=30);
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
+
 .ui-button {
   font-size: 1em;
 }
 
-#player_name {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  padding: 4px;
-}
-
 #status_panel {
   position: absolute;
-  left: 10px;
-  top: 10px;
-  padding: 4px;
+  right: 0;
+  top: 0;
+  padding: 10px;
+  opacity: .8;
+  filter: Alpha(Opacity=80);
+  line-height: 1.5;
+}
+
+#status_panel div {
+  margin-bottom: 5px;
+}
+
+#player_name {
+  border-bottom: 1px solid #281B06;
 }
 
 #bottom_left_buttons {
@@ -56,8 +88,17 @@ body {
   right: 10px;
 }
 
+#game_ui {
+  /* position: absolute; */
+  /* top: 0; */
+  /* left: 0; */
+
+  position: relative;
+}
+
 #game_ui,
 #about_dialog,
+#welcome_dialog,
 #requirements_message,
 #requirements_message div {
   display: none;
@@ -82,5 +123,23 @@ textarea, input, a {
 #requirements_message {
   width: 300px;
   margin: 10px;
+  padding: 10px;
+}
+
+input {
+  border: 1px solid #281B06;
+  background: rgb(152,114,77);
+}
+
+#current_url {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+#waiting_for_player_message {
+  position: absolute;
+  top: 0;
+  right: 300px;
   padding: 10px;
 }

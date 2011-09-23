@@ -119,6 +119,7 @@ function Game(sessionId) {
         type: "state_update",
         placements: board.placements,
         lastPlacements: lastPlacements,
+        players: playerCount(),
         turn: turn
       });
     });
@@ -201,6 +202,13 @@ function Game(sessionId) {
     }
   }
 
+  function playerCount() {
+    var count = 0;
+    if (players[0]) count++;
+    if (players[1]) count++;
+    return count;
+  }
+
   this.destroy = function() {
     if (joined) {
       leave();
@@ -215,13 +223,18 @@ function Game(sessionId) {
   connect(function() {
     load(function() {
       join(function() {
-        updateListeners({
-          type: "setup",
-          sessionId: sessionId,
-          placements: board.placements,
-          playerId: playerId,
-          lastPlacements: lastPlacements,
-          turn: turn
+        save(function() {
+          publishDbUpdate();
+
+          updateListeners({
+            type: "setup",
+            sessionId: sessionId,
+            placements: board.placements,
+            playerId: playerId,
+            players: playerCount(),
+            lastPlacements: lastPlacements,
+            turn: turn
+          });
         });
       });
     });

@@ -8,9 +8,31 @@
     <link rel="stylesheet" type="text/css" href="css/main.css" />
   </head>
   <body>
+
+    <div id="background"></div>
+
+    <div id="game_ui">
+      <h1 id="title">Four Up 3D</h1>
+      <div id="waiting_for_player_message" class="ui-widget ui-widget-content ui-corner-bottom">
+        Waiting for another player to join...
+      </div>
+      <div id="render_area"></div>
+      <div id="bottom_left_buttons">
+        <button id="new_game_button">New Game</button>
+      </div>
+      <div id="bottom_right_buttons">
+        <button id="about_button">About</button>
+      </div>
+      <div id="status_panel" class="ui-widget ui-widget-content ui-corner-bl">
+        <div id="player_name"></div>
+        <div id="turn_message"></div>
+        <div id="score_message"></div>
+      </div>
+    </div>
+
     <div id="overlay_message" class="ui-widget-overlay">
       <div class="ui-widget ui-widget-content ui-corner-all">
-        <img src="images/busy.gif" width="43" height="11" />
+        <img src="images/busy.gif" alt="busy" width="43" height="11" />
         <span>Loading...</span>
       </div>
     </div>
@@ -20,23 +42,27 @@
       <p>Find out how to get it <a href="http://get.webgl.org/">here</a>.</p>
     </div>
 
-    <div id="game_ui">
-      <div id="render_area"></div>
-      <div id="bottom_left_buttons">
-        <button id="new_game_button">New Game</button>
-      </div>
-      <div id="bottom_right_buttons">
-        <button id="about_button">About</button>
-      </div>
-      <div id="player_name" class="ui-widget ui-widget-content ui-corner-all"></div>
-      <div id="status_panel" class="ui-widget ui-widget-content ui-corner-all">
-        <div id="turn_message"></div>
-        <div id="score_message"></div>
-      </div>
+    <div id="welcome_dialog">
+      <h2>Welcome to Four Up 3D!</h2>
+      <p>The rules are simple, make a line of four pieces of your color in any
+      direction to get a point.  The player with the most points when the board
+      is full wins.</p>
+      <p>Send the following URL to whomever you'd like to play with:</p>
+      <input type="text" id="current_url" />
     </div>
 
     <div id="about_dialog">
-      <p>Created by <a href="http://nickewing.net">Nick Ewing</a>.</p>
+      <p>Created by <a href="http://nickewing.net">Nick Ewing</a> using the
+      following:<p>
+      <ul>
+        <li><a href="http://www.khronos.org/registry/webgl/specs/latest/">WebGL</a>
+        <li>
+          <a href="http://dev.w3.org/html5/websockets/">Web Sockets</a>
+          through <a href="http://socket.io/">Socket.IO</a>
+        </li>
+        <li><a href="http://nodejs.org/">Node.js</a></li>
+        <li><a href="http://redis.io/">Redis</a></li>
+      </ul>
       <p>Source available on <a href="https://github.com/nickewing/">GitHub</a>.</p>
     </div>
 

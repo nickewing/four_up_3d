@@ -22,7 +22,7 @@ function GameRenderer() {
       poleIds                 = {},
       polePieceCount          = [],
       poleZeroCoord           = -300,
-      pieceMarkers        = [],
+      pieceMarkers            = [],
       pieceMarkerGeometry,
       markerGeometry,
       pieces                  = [],
@@ -200,7 +200,7 @@ function GameRenderer() {
   function setCamera() {
     camera = new THREE.Camera(40, window.innerWidth / window.innerHeight, 1, 10000);
     camera.position.y = 1200;
-    camera.target.position.y = 0;
+    camera.target.position.y = -50;
 
     setCameraPosition();
   }

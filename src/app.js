@@ -1,5 +1,4 @@
 var express = require('express'),
-    nib = require('nib'),
     sio = require('socket.io'),
     Game = require('./game').Game;
 
