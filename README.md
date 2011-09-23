@@ -1,5 +1,5 @@
 Four Up 3D
-----------
+==========
 
 Four Up 3D is an online multiplayer implementation of 3D Connect Four:
 
@@ -38,4 +38,4 @@ Run with node:
     node src/app.js
 
 
-Copyright 2011 Nick Ewing.
+Copyright (C) 2011 by Nick Ewing
