@@ -1,5 +1,6 @@
-var Board = require('../public/js/board').Board,
-    redis = require('redis'),
+var Board  = require('../public/js/board').Board,
+    config = require('./config'),
+    redis  = require('redis'),
     crypto = require('crypto');
 
 function Game(sessionId) {
@@ -19,13 +20,13 @@ function Game(sessionId) {
 
     function callbackWhenDone() {
       if (dbClientReady && dbSubscriberReady) {
-        debug("fully connected");
+        logDebug("fully connected");
         cb();
       }
     }
 
     function onError(err) {
-      debug("DB ERR: " + err);
+      logError("DB: " + err);
     }
 
     dbClient     = redis.createClient();
@@ -50,12 +51,18 @@ function Game(sessionId) {
     dbSubscriber.on("error", onError);
   }
 
-  function debug(message) {
-    var str = "DEBUG [" + dbKey() + "]";
-    if (playerId) {
-      str += "[" + playerId + "]";
+  function logError(message) {
+    console.log("ERROR: " + message);
+  }
+
+  function logDebug(message) {
+    if (config.debugMode) {
+      var str = "DEBUG [" + dbKey() + "]";
+      if (playerId) {
+        str += "[" + playerId + "]";
+      }
+      console.log(str + ": " + message);
     }
-    console.log(str + ": " + message);
   }
 
   function dbKey() {
@@ -72,10 +79,10 @@ function Game(sessionId) {
 
     dbClient.set(dbKey(), gameData, function(err) {
       if (err) {
-        debug("ERR: " + err);
+        logError("ERR: " + err);
       } else {
-        // debug("Saved: " + gameData);
-        debug("Saved");
+        // logDebug("Saved: " + gameData);
+        logDebug("Saved");
       }
 
       if (cb) cb();
@@ -85,18 +92,18 @@ function Game(sessionId) {
   function load(cb) {
     dbClient.get(dbKey(), function(err, value) {
       if (err) {
-        debug("ERR: " + err);
+        logError("ERR: " + err);
       } else if (value) {
         var gameData = JSON.parse(value);
-        debug("Found game: " + value);
-        // debug("Loaded");
+        logDebug("Found game: " + value);
+        // logDebug("Loaded");
 
         board = new Board(gameData.placements);
         players = gameData.players;
         turn = gameData.turn;
         lastPlacements = gameData.lastPlacements;
       } else {
-        debug("New game " + dbKey());
+        logDebug("New game " + dbKey());
         board = new Board();
         board.clear();
       }
@@ -113,7 +120,7 @@ function Game(sessionId) {
   }
 
   function onDbMessage(channel, data) {
-    debug("Subscriber message: " + data);
+    logDebug("Subscriber message: " + data);
     load(function() {
       updateListeners({
         type: "state_update",
@@ -128,7 +135,7 @@ function Game(sessionId) {
   function publishDbUpdate(data) {
     dbClient.publish(dbKey(), "", function(err) {
       if (err) {
-        debug("ERR: " + err);
+        logError("ERR: " + err);
       }
     });
   }
@@ -152,7 +159,7 @@ function Game(sessionId) {
         nextPlayersTurn();
 
         save(function() {
-          debug("Publish placement: " + poleId);
+          logDebug("Publish placement: " + poleId);
           publishDbUpdate();
         });
       }
@@ -189,7 +196,7 @@ function Game(sessionId) {
   }
 
   function leave() {
-    debug('Player left: ' + playerId);
+    logDebug('Player left: ' + playerId);
     if (playerId <= 2) {
       players[playerId - 1] = false;
     }

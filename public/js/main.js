@@ -1,5 +1,7 @@
 (function() {
-  var gameRenderer,
+  var debugMode = false,
+      gameRenderer,
+      clearBoard,
       dropSound;
 
   if (window.Audio) {
@@ -21,6 +23,12 @@
     });
   });
 
+  function debug(message) {
+    if (debugMode) {
+      console.log(message);
+    }
+  }
+
   function requirementsLoaded() {
     if (hasWebGl()) {
       gameRenderer = new GameRenderer();
@@ -36,7 +44,7 @@
 
       $("#new_game_button").
         button().
-          click(function() { gameRenderer.clear(); });
+          click(function() { clearBoard(); });
 
       $("#about_dialog").dialog({
         autoOpen: false,
@@ -53,6 +61,7 @@
       });
 
       $("#game_ui").show();
+
     } else {
       hideOverlay();
       $("#requirements_message").show();
@@ -109,6 +118,11 @@
 
     socket = io.connect();
 
+    clearBoard = function() {
+      socket.emit("clear");
+      gameRenderer.clear();
+    }
+
     function setupIfReady() {
       if (sessionId != null && connected) {
         socket.emit("setup", {sessionId: sessionId});
@@ -130,7 +144,10 @@
     function onStateUpdate(data) {
       var status;
 
-      board.placements = data.placements;
+      if (board.setPlacements(data.placements)) {
+        dropSound.play();
+      }
+
       board.score();
 
       gameRenderer.drawPieces(data.placements);
@@ -154,9 +171,15 @@
         status = "Dark's turn";
       }
 
+      if (playerId == 3) {
+        $("#new_game_button").hide();
+      } else {
+        $("#new_game_button").show();
+      }
+
       $('#turn_message').text(status);
 
-      $('#score_message').text(board.scores[0] + " Light, " + board.scores[1] + " Dark");
+      $('#score_message').text(board.scores[0] + " Light / " + board.scores[1] + " Dark");
 
       gameRenderer.enablePlacement(data.turn == playerId);
     }
@@ -183,8 +206,8 @@
     });
 
     socket.on("setup", function(data) {
-      console.log("setup");
-      console.log(data);
+      debug("setup");
+      debug(data);
 
       board = new Board();
 
@@ -203,21 +226,14 @@
     });
 
     socket.on("state_update", function(data) {
-      console.log("state_update");
-      console.log(data);
+      debug("state_update");
+      debug(data);
 
       onStateUpdate(data);
-
-      if (dropSound) {
-        dropSound.play();
-      }
     });
 
-    gameRenderer.addListener(function(data) {
-      var type = data.type;
-      delete data.type;
-      console.log(type);
-      socket.emit(type, data);
+    gameRenderer.on("placement", function(poleId) {
+      socket.emit("placement", poleId);
     });
   }
 })();

@@ -28,7 +28,7 @@ function GameRenderer() {
       pieces                  = [],
       piecePoleIds            = {},
       debug                   = false,
-      listeners               = [],
+      listeners               = {},
       placementEnabled        = false;
    
   function smoothMaterial(color) {
@@ -249,10 +249,6 @@ function GameRenderer() {
   }
 
   function onDocumentKeyUp(event) {
-    if (event.keyCode == 78) {
-      self.clear();
-    }
-
     dragKeyDown = false;
   }
 
@@ -292,10 +288,7 @@ function GameRenderer() {
     if (event.button == 0 && !dragKeyDown) {
       if (markedPoleId != null) {
         self.addPieceToPole(markedPoleId, self.playerId);
-        updateListeners({
-          type: "placement",
-          poleId: markedPoleId
-        });
+        updateListeners("placement", markedPoleId);
       }
     } else {
       dragging = true;
@@ -370,10 +363,10 @@ function GameRenderer() {
     renderer.render(scene, camera);
   }
 
-  function updateListeners(data) {
-    var len = listeners.length;
+  function updateListeners(type, data) {
+    var len = listeners[type].length;
     for (var i = 0; i < len; i++) {
-      listeners[i](data);
+      listeners[type][i](data);
     }
   }
 
@@ -415,11 +408,12 @@ function GameRenderer() {
   }
 
   self.clear = function() {
-    updateListeners({type: 'clear'});
+    drawPieces([]);
   }
 
-  self.addListener = function(cb) {
-    listeners.push(cb);
+  self.on = function(action, cb) {
+    listeners[action] = [];
+    listeners[action].push(cb);
   }
 
   self.enablePlacement = function(state) {

@@ -2,15 +2,32 @@
   "use strict";
 
   function Board(placements) {
-    this.placements = placements || [];
+    if (placements) {
+      this.placements = placements;
+    } else {
+      this.clear();
+    }
+
     this.scores = [0, 0];
   }
 
   Board.size = 4;
+  Board.sizeCubed = 64;
+
+  Board.prototype.setPlacements = function(placements) {
+    var newPieces = false;
+    for (var i = 0; i < Board.sizeCubed; i++) {
+      if (placements[i] && this.placements[i] != placements[i]) {
+        newPieces = true;
+      }
+      this.placements[i] = placements[i];
+    }
+    return newPieces;
+  }
 
   Board.prototype.clear = function() {
     this.placements = [];
-    for (var i = 0; i < Board.size * Board.size * Board.size; i++) {
+    for (var i = 0; i < Board.sizeCubed; i++) {
       this.placements[i] = 0;
     }
     this.scores = [0, 0];
