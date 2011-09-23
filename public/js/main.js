@@ -116,7 +116,7 @@
         board,
         playerId;
 
-    socket = io.connect();
+    socket = io.connect("http://" + window.location.hostname + ":8080");
 
     clearBoard = function() {
       socket.emit("clear");
