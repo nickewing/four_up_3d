@@ -10,7 +10,6 @@ function GameRenderer() {
       lastMouseX,
       dragging                = false,
       dragKeyDown             = false,
-      ray,
       theta                   = 45,
       darkMaterials           = smoothMaterial(self.colors.darkPiece),
       lightMaterials          = smoothMaterial(self.colors.lightPiece),
@@ -220,7 +219,6 @@ function GameRenderer() {
 
     projector = new THREE.Projector();
     mouse2D = new THREE.Vector3(0, 10000, 0.5);
-    ray = new THREE.Ray(camera.position, null);
 
     calculateGeometries();
 
@@ -325,6 +323,11 @@ function GameRenderer() {
   }
 
   function setPoleMarkerIfMouseOverPole() {
+    var mouse3D = projector.unprojectVector(mouse2D.clone(), camera),
+        ray     = new THREE.Ray(camera.position, null);
+
+    ray.direction = mouse3D.subSelf(camera.position).normalize();
+
     var intersects = ray.intersectScene(scene),
         numIntersects = intersects.length;
 
@@ -345,8 +348,6 @@ function GameRenderer() {
   }
 
   function render() {
-    var mouse3D = projector.unprojectVector(mouse2D.clone(), camera);
-    ray.direction = mouse3D.subSelf(camera.position).normalize();
 
     if (dragging) {
       theta += mouseDeltaX * 500;
