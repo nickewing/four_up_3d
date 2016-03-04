@@ -1,19 +1,14 @@
-var sio    = require('socket.io'),
-    Game   = require('./game').Game,
+var Game   = require('./game').Game,
     config = require('./config');
 
-exports.listen = function(app) {
-  var io = sio.listen(app);
-
-  io.set("log level", 0);
-
+exports.listen = function(io) {
   function logDebug(message) {
     if (config.debugMode) {
       console.log("DEBUG: " + message);
     }
   }
 
-  io.sockets.on("connection", function(socket) {
+  io.on("connection", function(socket) {
     var game;
 
     logDebug("connect");

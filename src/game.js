@@ -29,8 +29,8 @@ function Game(sessionId) {
       logError("DB: " + err);
     }
 
-    dbClient     = redis.createClient();
-    dbSubscriber = redis.createClient();
+    dbClient     = redis.createClient(config.redis.port, config.redis.host);
+    dbSubscriber = redis.createClient(config.redis.port, config.redis.host);
 
     dbClient.on("ready", function() {
       dbClientReady = true;

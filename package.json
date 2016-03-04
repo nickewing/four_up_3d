@@ -2,10 +2,10 @@
   "name": "four_up_3d",
   "version": "1.0.0",
   "dependencies": {
-    "hiredis": "0.1.12",
+    "express": "^4.13.4",
+    "hiredis": "^0.4.1",
+    "nodeunit": "0.5.1",
     "redis": "0.6.7",
-    "express": "2.4.6",
-    "socket.io": "0.8.4",
-    "nodeunit": "0.5.1"
+    "socket.io": "1.4.5"
   }
 }

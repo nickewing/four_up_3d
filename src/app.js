@@ -1,8 +1,10 @@
-var express         = require('express'),
+var express         = require('express')
+    app             = express(),
+    http            = require('http').Server(app),
+    io              = require('socket.io')(http),
     Game            = require('./game').Game,
     config          = require('./config')
-    socket_listener = require('./socket_listener'),
-    app             = express.createServer();
+    socket_listener = require('./socket_listener');
 
 function logDebug(message) {
   if (config.debugMode) {
@@ -10,13 +12,11 @@ function logDebug(message) {
   }
 }
 
-app.configure(function () {
-  app.use(express.static(__dirname + '/../public'));
-});
+app.use(express.static(__dirname + '/../public'));
 
-app.listen(config.port, function () {
-  var addr = app.address();
+var listener = http.listen(config.port, function(){
+  var addr = listener.address();
   logDebug('Listening on http://' + addr.address + ':' + addr.port);
 });
 
-socket_listener.listen(app);
+socket_listener.listen(io);
